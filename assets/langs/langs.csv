@@ -1,0 +1,73 @@
+key,en,th
+appName,Popcorn,ป๊อปคอร์น
+welcome,Welcome {name},ยินดีต้อนรับ {name}
+hotToday,Here's what's hot today,นี่คือหนังเด่นวันนี้
+searchHint,"Search movie, actor, genre...","ค้นหาหนัง นักแสดง แนวหนัง..."
+watchStats,Your Watch Stats,สถิติการดูของคุณ
+moviesWatched,Movies watched,หนังที่ดูแล้ว
+checkNow,Check now,ดูตอนนี้
+trendingNow,Trending Now,กำลังมาแรงตอนนี้
+myWatchlist,My Watchlist,รายการของฉัน
+seeAll,See all,ดูทั้งหมด
+continueWatching,Continue Watching,ดูต่อ
+upcoming,Upcoming,เร็ว ๆ นี้
+watched,Watched,ดูแล้ว
+wantToWatch,Want to Watch,อยากดู
+favorite,Favorite,รายการโปรด
+today,Today,วันนี้
+explore,Explore,สำรวจ
+watchlist,Watchlist,รายการของฉัน
+profile,Profile,โปรไฟล์
+movieDetail,Movie Detail,รายละเอียดหนัง
+rating,Rating,คะแนน
+releaseYear,Release Year,ปีที่ฉาย
+duration,Duration,ระยะเวลา
+ratingDistribution,Rating Distribution,การกระจายคะแนน
+budget,Budget,งบประมาณ
+revenue,Revenue,รายได้
+voteCount,Vote Count,จำนวนโหวต
+originalLanguage,Original Language,ภาษาต้นฉบับ
+overview,Overview,เรื่องย่อ
+cast,Cast,นักแสดง
+trailer,Trailer,ตัวอย่างหนัง
+addToWatchlist,Add to Watchlist,เพิ่มในรายการ
+markWatched,Watched,ดูแล้ว
+similarMovies,Similar Movies,หนังที่คล้ายกัน
+myList,My List,รายการของฉัน
+addMovie,Add Movie,เพิ่มหนัง
+status,Status,สถานะ
+personalRating,Personal Rating,คะแนนส่วนตัว
+notes,Notes,โน้ต
+watchedDate,Watched Date,วันที่ดู
+save,Save,บันทึก
+cancel,Cancel,ยกเลิก
+totalMoviesWatched,Total Movies Watched,หนังที่ดูทั้งหมด
+totalHours,Total Hours,ชั่วโมงรวม
+averageRating,Average Rating,คะแนนเฉลี่ย
+favoriteGenre,Favorite Genre,แนวที่ชอบ
+releaseCalendar,Release Calendar,ปฏิทินฉาย
+inTheaters,In Theaters,เข้าฉายในโรง
+search,Search,ค้นหา
+discoverByMood,Discover by Mood,ค้นหาตามอารมณ์
+trending,Trending,กำลังมาแรง
+topRated,Top Rated,คะแนนสูงสุด
+nowPlaying,Now Playing,กำลังฉาย
+movieRoulette,Movie Roulette,สุ่มหนัง
+spinMovie,Spin a movie,สุ่มหนังหนึ่งเรื่อง
+allGenres,All Genres,ทุกแนว
+noMovies,No movies found,ไม่พบหนัง
+mockDataNotice,Showing demo data,กำลังแสดงข้อมูลตัวอย่าง
+networkUnavailable,TMDB is unavailable. Demo data is shown instead.,ไม่สามารถเชื่อมต่อ TMDB ได้ กำลังแสดงข้อมูลตัวอย่างแทน
+home,Home,หน้าหลัก
+calendar,Calendar,ปฏิทิน
+minutes,min,นาที
+hours,hrs,ชม.
+thisWeek,This week,สัปดาห์นี้
+popularity,Popularity,ความนิยม
+add,Add,เพิ่ม
+selectStatus,Select Status,เลือกสถานะ
+notesHint,Write a note...,เขียนโน้ต...
+noDate,No date selected,ยังไม่ได้เลือกวันที่
+chooseDate,Choose date,เลือกวันที่
+movie,Movie,หนัง
+november2026,November 2026,พฤศจิกายน 2026
