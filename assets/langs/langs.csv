@@ -71,3 +71,18 @@ noDate,No date selected,ยังไม่ได้เลือกวันท�
 chooseDate,Choose date,เลือกวันที่
 movie,Movie,หนัง
 november2026,November 2026,พฤศจิกายน 2026
+settings,Settings,การตั้งค่า
+language,Language,ภาษา
+english,English,ภาษาอังกฤษ
+thai,Thai,ภาษาไทย
+notifications,Notifications,การแจ้งเตือน
+notificationsDescription,Release reminders and watchlist updates,แจ้งเตือนวันฉายและการอัปเดตรายการ
+'autoplayTrailers',Autoplay trailers,เล่นตัวอย่างอัตโนมัติ
+autoplayTrailersDescription,Play trailers automatically on movie details,เล่นตัวอย่างอัตโนมัติในหน้ารายละเอียด
+editProfile,Edit profile,แก้ไขโปรไฟล์
+displayName,Display name,ชื่อที่แสดง
+email,Email,อีเมล
+noEmail,No email added,ยังไม่ได้เพิ่มอีเมล
+more,More,เพิ่มเติม
+aboutApp,About Popcorn,เกี่ยวกับ Popcorn
+appVersion,Version {},เวอร์ชัน {}
