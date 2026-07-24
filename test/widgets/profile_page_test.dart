@@ -8,6 +8,7 @@ import 'package:popcorn_movie_tracker/features/profile/data/user_preferences_loc
 import 'package:popcorn_movie_tracker/features/profile/domain/user_preferences.dart';
 import 'package:popcorn_movie_tracker/features/profile/presentation/profile_controller.dart';
 import 'package:popcorn_movie_tracker/features/profile/presentation/profile_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MockPreferencesDataSource extends Mock
     implements UserPreferencesLocalDataSource {}
@@ -15,7 +16,11 @@ class MockPreferencesDataSource extends Mock
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUpAll(EasyLocalization.ensureInitialized);
+  setUpAll(() async {
+    SharedPreferences.setMockInitialValues(const {});
+    registerFallbackValue(const UserPreferences());
+    await EasyLocalization.ensureInitialized();
+  });
 
   testWidgets('shows profile details and settings', (tester) async {
     final source = MockPreferencesDataSource();
