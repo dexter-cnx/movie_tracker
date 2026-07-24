@@ -43,12 +43,30 @@ abstract final class AppTheme {
       dividerColor: AppColors.divider,
       cardColor: AppColors.card,
       textTheme: const TextTheme(
-        headlineLarge: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: AppColors.text, height: 1.05, letterSpacing: -0.8),
-        headlineMedium: TextStyle(fontSize: 23, fontWeight: FontWeight.w900, color: AppColors.text, letterSpacing: -0.5),
-        titleLarge: TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: AppColors.text, letterSpacing: -0.25),
-        titleMedium: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.text),
-        bodyLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.text),
-        bodyMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.secondary),
+        headlineLarge: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w900,
+            color: AppColors.text,
+            height: 1.05,
+            letterSpacing: -0.8),
+        headlineMedium: TextStyle(
+            fontSize: 23,
+            fontWeight: FontWeight.w900,
+            color: AppColors.text,
+            letterSpacing: -0.5),
+        titleLarge: TextStyle(
+            fontSize: 19,
+            fontWeight: FontWeight.w900,
+            color: AppColors.text,
+            letterSpacing: -0.25),
+        titleMedium: TextStyle(
+            fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.text),
+        bodyLarge: TextStyle(
+            fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.text),
+        bodyMedium: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: AppColors.secondary),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -72,8 +90,10 @@ abstract final class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.cardAlt,
         selectedColor: AppColors.button,
-        labelStyle: const TextStyle(color: AppColors.text, fontWeight: FontWeight.w700),
-        secondaryLabelStyle: const TextStyle(color: AppColors.onButton, fontWeight: FontWeight.w800),
+        labelStyle:
+            const TextStyle(color: AppColors.text, fontWeight: FontWeight.w700),
+        secondaryLabelStyle: const TextStyle(
+            color: AppColors.onButton, fontWeight: FontWeight.w800),
         side: BorderSide.none,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),

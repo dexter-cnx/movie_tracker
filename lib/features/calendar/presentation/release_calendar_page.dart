@@ -53,9 +53,7 @@ class ReleaseCalendarPage extends StatelessWidget {
                       days[index],
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: isSelected
-                            ? AppColors.onButton
-                            : AppColors.text,
+                        color: isSelected ? AppColors.onButton : AppColors.text,
                         fontWeight: FontWeight.w800,
                         fontSize: 12,
                       ),

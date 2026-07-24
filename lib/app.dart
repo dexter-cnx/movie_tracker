@@ -18,7 +18,8 @@ final _router = GoRouter(
         GoRoute(path: '/', builder: (_, __) => const HomePage()),
         GoRoute(path: '/explore', builder: (_, __) => const SearchPage()),
         GoRoute(path: '/watchlist', builder: (_, __) => const WatchlistPage()),
-        GoRoute(path: '/calendar', builder: (_, __) => const ReleaseCalendarPage()),
+        GoRoute(
+            path: '/calendar', builder: (_, __) => const ReleaseCalendarPage()),
       ],
     ),
     GoRoute(

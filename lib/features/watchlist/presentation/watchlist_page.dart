@@ -12,9 +12,8 @@ class WatchlistPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final items = ref.watch(watchlistControllerProvider);
-    final watched = items
-        .where((item) => item.status == WatchStatus.watched)
-        .toList();
+    final watched =
+        items.where((item) => item.status == WatchStatus.watched).toList();
 
     final totalMinutes = watched.fold<int>(
       0,

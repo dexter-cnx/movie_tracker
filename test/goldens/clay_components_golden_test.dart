@@ -27,7 +27,8 @@ void main() {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Popcorn', style: AppTheme.light.textTheme.headlineLarge),
+                    Text('Popcorn',
+                        style: AppTheme.light.textTheme.headlineLarge),
                     const SizedBox(height: 24),
                     const ClayCard(
                       child: Row(
@@ -38,7 +39,9 @@ void main() {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Your Watch Stats', style: TextStyle(fontWeight: FontWeight.w900)),
+                                Text('Your Watch Stats',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.w900)),
                                 SizedBox(height: 6),
                                 Text('12 movies watched this month'),
                               ],
@@ -48,7 +51,11 @@ void main() {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    const Poster(path: null, title: 'Dune: Part Two', width: 150, height: 220),
+                    const Poster(
+                        path: null,
+                        title: 'Dune: Part Two',
+                        width: 150,
+                        height: 220),
                   ],
                 ),
               ),

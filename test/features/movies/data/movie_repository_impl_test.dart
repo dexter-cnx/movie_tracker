@@ -4,7 +4,6 @@ import 'package:popcorn_movie_tracker/features/movies/data/mock_movies.dart';
 import 'package:popcorn_movie_tracker/features/movies/data/movie_repository_impl.dart';
 import 'package:popcorn_movie_tracker/features/movies/data/tmdb_remote_data_source.dart';
 import 'package:popcorn_movie_tracker/features/movies/domain/entities/movie.dart';
-import 'package:popcorn_movie_tracker/features/movies/domain/repositories/movie_repository.dart';
 
 class MockTmdbRemoteDataSource extends Mock implements TmdbRemoteDataSource {}
 
@@ -55,12 +54,15 @@ void main() {
     });
 
     test('search fallback filters mock movies case-insensitively', () async {
-      when(() => remote.search('dune', 'en-US')).thenThrow(Exception('network'));
+      when(() => remote.search('dune', 'en-US'))
+          .thenThrow(Exception('network'));
 
       final result = await repository.search('dune', 'en-US');
 
       expect(result, isNotEmpty);
-      expect(result.every((movie) => movie.title.toLowerCase().contains('dune')), isTrue);
+      expect(
+          result.every((movie) => movie.title.toLowerCase().contains('dune')),
+          isTrue);
     });
 
     test('genre fallback returns built-in genres', () async {
@@ -68,7 +70,8 @@ void main() {
 
       final result = await repository.getGenres('th-TH');
 
-      expect(result.map((genre) => genre.id), containsAll(<int>[28, 35, 18, 878, 16]));
+      expect(result.map((genre) => genre.id),
+          containsAll(<int>[28, 35, 18, 878, 16]));
     });
 
     test('discover fallback filters by genre id', () async {
@@ -79,9 +82,11 @@ void main() {
       expect(result.every((movie) => movie.genreIds.contains(878)), isTrue);
     });
 
-    test('details fallback returns matching mock movie when available', () async {
+    test('details fallback returns matching mock movie when available',
+        () async {
       final target = mockMovies.first;
-      when(() => remote.details(target.id, 'en-US')).thenThrow(Exception('network'));
+      when(() => remote.details(target.id, 'en-US'))
+          .thenThrow(Exception('network'));
 
       final result = await repository.getDetails(target.id, 'en-US');
 
@@ -90,7 +95,8 @@ void main() {
     });
 
     test('details fallback returns first mock movie for unknown id', () async {
-      when(() => remote.details(999999, 'en-US')).thenThrow(Exception('network'));
+      when(() => remote.details(999999, 'en-US'))
+          .thenThrow(Exception('network'));
 
       final result = await repository.getDetails(999999, 'en-US');
 

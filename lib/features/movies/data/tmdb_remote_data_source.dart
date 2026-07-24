@@ -8,41 +8,58 @@ class TmdbRemoteDataSource {
   final Dio dio;
 
   Map<String, dynamic> _params(String language) => {
-    'language': language,
-    'include_image_language': 'th,en,null',
-    'include_video_language': 'th,en',
-  };
+        'language': language,
+        'include_image_language': 'th,en,null',
+        'include_video_language': 'th,en',
+      };
 
-  Future<List<Movie>> _list(String path, String language, [Map<String, dynamic>? extra]) async {
-    final response = await dio.get<Map<String, dynamic>>(path, queryParameters: {..._params(language), ...?extra});
+  Future<List<Movie>> _list(String path, String language,
+      [Map<String, dynamic>? extra]) async {
+    final response = await dio.get<Map<String, dynamic>>(path,
+        queryParameters: {..._params(language), ...?extra});
     final results = response.data?['results'] as List? ?? const [];
-    return results.whereType<Map<String, dynamic>>().map(MovieModel.fromJson).toList();
+    return results
+        .whereType<Map<String, dynamic>>()
+        .map(MovieModel.fromJson)
+        .toList();
   }
 
-  Future<List<Movie>> popular(String language) => _list('/movie/popular', language, {'page': 1});
-  Future<List<Movie>> trending(String language) => _list('/trending/movie/week', language);
-  Future<List<Movie>> topRated(String language) => _list('/movie/top_rated', language);
-  Future<List<Movie>> upcoming(String language) => _list('/movie/upcoming', language);
-  Future<List<Movie>> nowPlaying(String language) => _list('/movie/now_playing', language);
+  Future<List<Movie>> popular(String language) =>
+      _list('/movie/popular', language, {'page': 1});
+  Future<List<Movie>> trending(String language) =>
+      _list('/trending/movie/week', language);
+  Future<List<Movie>> topRated(String language) =>
+      _list('/movie/top_rated', language);
+  Future<List<Movie>> upcoming(String language) =>
+      _list('/movie/upcoming', language);
+  Future<List<Movie>> nowPlaying(String language) =>
+      _list('/movie/now_playing', language);
 
   Future<Movie> details(int id, String language) async {
-    final response = await dio.get<Map<String, dynamic>>('/movie/$id', queryParameters: {
+    final response =
+        await dio.get<Map<String, dynamic>>('/movie/$id', queryParameters: {
       ..._params(language),
       'append_to_response': 'credits,videos,similar',
     });
     return MovieModel.fromJson(response.data ?? const {});
   }
 
-  Future<List<Movie>> search(String query, String language) => _list('/search/movie', language, {'query': query});
+  Future<List<Movie>> search(String query, String language) =>
+      _list('/search/movie', language, {'query': query});
 
   Future<List<Genre>> genres(String language) async {
-    final response = await dio.get<Map<String, dynamic>>('/genre/movie/list', queryParameters: _params(language));
+    final response = await dio.get<Map<String, dynamic>>('/genre/movie/list',
+        queryParameters: _params(language));
     final list = response.data?['genres'] as List? ?? const [];
-    return list.whereType<Map<String, dynamic>>().map((e) => Genre((e['id'] as num).toInt(), e['name'] as String? ?? '')).toList();
+    return list
+        .whereType<Map<String, dynamic>>()
+        .map((e) => Genre((e['id'] as num).toInt(), e['name'] as String? ?? ''))
+        .toList();
   }
 
-  Future<List<Movie>> discover(int? genreId, String language) => _list('/discover/movie', language, {
-    if (genreId != null) 'with_genres': genreId,
-    'sort_by': 'popularity.desc',
-  });
+  Future<List<Movie>> discover(int? genreId, String language) =>
+      _list('/discover/movie', language, {
+        if (genreId != null) 'with_genres': genreId,
+        'sort_by': 'popularity.desc',
+      });
 }

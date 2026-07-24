@@ -4,7 +4,9 @@ import 'package:mocktail/mocktail.dart';
 import 'package:popcorn_movie_tracker/core/network/rate_limit_interceptor.dart';
 
 class MockDio extends Mock implements Dio {}
-class MockErrorInterceptorHandler extends Mock implements ErrorInterceptorHandler {}
+
+class MockErrorInterceptorHandler extends Mock
+    implements ErrorInterceptorHandler {}
 
 void main() {
   late MockDio dio;

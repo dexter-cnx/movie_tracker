@@ -39,7 +39,8 @@ void main() {
 
     await source.save(value);
 
-    final captured = verify(() => box.put('movie-1', captureAny())).captured.single as Map;
+    final captured =
+        verify(() => box.put('movie-1', captureAny())).captured.single as Map;
     expect(captured['id'], 'movie-1');
     expect(captured['title'], 'movie-1');
   });

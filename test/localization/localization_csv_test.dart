@@ -6,16 +6,15 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   test('langs.csv has valid header, no blank rows, and unique keys', () {
     final file = File('assets/langs/langs.csv');
-    expect(file.existsSync(), isTrue, reason: 'assets/langs/langs.csv must exist');
+    expect(file.existsSync(), isTrue,
+        reason: 'assets/langs/langs.csv must exist');
 
     // Normalize line endings first so the test behaves consistently on
     // macOS/Linux (LF) and Windows (CRLF). CsvToListConverter otherwise uses
     // its configured EOL literally, which can make the whole file look like
     // a single CSV row when the line ending does not match.
-    final csvText = file
-        .readAsStringSync()
-        .replaceAll('\r\n', '\n')
-        .replaceAll('\r', '\n');
+    final csvText =
+        file.readAsStringSync().replaceAll('\r\n', '\n').replaceAll('\r', '\n');
 
     final rows = const CsvToListConverter(
       eol: '\n',

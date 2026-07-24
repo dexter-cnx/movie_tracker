@@ -3,7 +3,9 @@ import 'package:popcorn_movie_tracker/features/movies/data/models/movie_model.da
 
 void main() {
   group('MovieModel.fromJson', () {
-    test('maps list and detail fields including cast trailer and similar movies', () {
+    test(
+        'maps list and detail fields including cast trailer and similar movies',
+        () {
       final movie = MovieModel.fromJson({
         'id': 1,
         'title': 'Dune: Part Two',

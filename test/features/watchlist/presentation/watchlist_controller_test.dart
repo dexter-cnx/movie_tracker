@@ -5,7 +5,8 @@ import 'package:popcorn_movie_tracker/features/watchlist/data/watchlist_local_da
 import 'package:popcorn_movie_tracker/features/watchlist/domain/watchlist_item.dart';
 import 'package:popcorn_movie_tracker/features/watchlist/presentation/watchlist_controller.dart';
 
-class MockWatchlistLocalDataSource extends Mock implements WatchlistLocalDataSource {}
+class MockWatchlistLocalDataSource extends Mock
+    implements WatchlistLocalDataSource {}
 
 void main() {
   late MockWatchlistLocalDataSource source;
