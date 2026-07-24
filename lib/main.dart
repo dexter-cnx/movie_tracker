@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:popcorn_movie_tracker/app.dart';
+import 'package:popcorn_movie_tracker/features/profile/data/user_preferences_local_data_source.dart';
 import 'package:popcorn_movie_tracker/features/watchlist/data/watchlist_local_data_source.dart';
 
 Future<void> main() async {
@@ -12,7 +13,10 @@ Future<void> main() async {
   await EasyLocalization.ensureInitialized();
   await dotenv.load(fileName: 'assets/.env');
   await Hive.initFlutter();
-  await Hive.openBox<Map>(WatchlistLocalDataSource.boxName);
+  await Future.wait([
+    Hive.openBox<Map>(WatchlistLocalDataSource.boxName),
+    Hive.openBox<Map>(UserPreferencesLocalDataSource.boxName),
+  ]);
 
   runApp(
     ProviderScope(
