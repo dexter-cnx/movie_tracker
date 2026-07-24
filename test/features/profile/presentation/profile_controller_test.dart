@@ -14,7 +14,7 @@ void main() {
 
   setUp(() {
     source = MockPreferencesDataSource();
-    when(source.load).thenReturn(const UserPreferences());
+    when(() => source.load()).thenReturn(const UserPreferences());
     when(() => source.save(any())).thenAnswer((_) async {});
 
     container = ProviderContainer(
@@ -29,7 +29,7 @@ void main() {
     final state = container.read(profileControllerProvider);
 
     expect(state.displayName, 'Alex');
-    verify(source.load).called(1);
+    verify(() => source.load()).called(1);
   });
 
   test('updates and persists profile fields', () async {
