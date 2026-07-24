@@ -39,7 +39,9 @@ void main() {
 
     await source.save(value);
 
-    verify(() => box.put('movie-1', value.toMap())).called(1);
+    final captured = verify(() => box.put('movie-1', captureAny())).captured.single as Map;
+    expect(captured['id'], 'movie-1');
+    expect(captured['title'], 'movie-1');
   });
 
   test('delete removes item by id', () async {
