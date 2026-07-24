@@ -28,8 +28,7 @@ class UserPreferences {
       email: email ?? this.email,
       favoriteGenre: favoriteGenre ?? this.favoriteGenre,
       languageCode: languageCode ?? this.languageCode,
-      notificationsEnabled:
-          notificationsEnabled ?? this.notificationsEnabled,
+      notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       autoplayTrailers: autoplayTrailers ?? this.autoplayTrailers,
     );
   }

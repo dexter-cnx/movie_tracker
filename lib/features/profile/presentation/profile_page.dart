@@ -19,7 +19,8 @@ class ProfilePage extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('profile'.tr(), style: Theme.of(context).textTheme.headlineLarge),
+            Text('profile'.tr(),
+                style: Theme.of(context).textTheme.headlineLarge),
             const SizedBox(height: 20),
             ClayCard(
               child: Row(
@@ -68,7 +69,8 @@ class ProfilePage extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 26),
-            Text('settings'.tr(), style: Theme.of(context).textTheme.titleLarge),
+            Text('settings'.tr(),
+                style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 12),
             ClayCard(
               padding: EdgeInsets.zero,
