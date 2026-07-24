@@ -12,6 +12,10 @@ void main() {
   late MockPreferencesDataSource source;
   late ProviderContainer container;
 
+  setUpAll(() {
+    registerFallbackValue(const UserPreferences());
+  });
+
   setUp(() {
     source = MockPreferencesDataSource();
     when(() => source.load()).thenReturn(const UserPreferences());
