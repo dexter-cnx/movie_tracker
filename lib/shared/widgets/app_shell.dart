@@ -10,7 +10,7 @@ class AppShell extends StatelessWidget {
   int _index(String location) {
     if (location.startsWith('/explore')) return 1;
     if (location.startsWith('/watchlist')) return 2;
-    if (location.startsWith('/calendar')) return 3;
+    if (location.startsWith('/profile')) return 3;
     return 0;
   }
 
@@ -35,8 +35,8 @@ class AppShell extends StatelessWidget {
                   '/explore'),
               _item(context, 2, index, Icons.bookmark_rounded, 'watchlist'.tr(),
                   '/watchlist'),
-              _item(context, 3, index, Icons.calendar_month_rounded,
-                  'calendar'.tr(), '/calendar'),
+              _item(context, 3, index, Icons.person_rounded, 'profile'.tr(),
+                  '/profile'),
             ],
           ),
         ),
@@ -49,40 +49,57 @@ class AppShell extends StatelessWidget {
           color: AppColors.button,
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withValues(alpha: .55),
-                blurRadius: 18,
-                offset: const Offset(0, 8))
+              color: Colors.black.withValues(alpha: .55),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
           ],
         ),
-        child:
-            const Icon(Icons.add_rounded, color: AppColors.onButton, size: 30),
+        child: IconButton(
+          tooltip: 'search'.tr(),
+          onPressed: () => context.go('/explore'),
+          icon: const Icon(
+            Icons.search_rounded,
+            color: AppColors.onButton,
+            size: 28,
+          ),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
-  Widget _item(BuildContext context, int i, int selected, IconData icon,
-          String label, String route) =>
-      Expanded(
-        child: InkWell(
-          onTap: () => context.go(route),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon,
-                  color: i == selected ? AppColors.text : AppColors.muted,
-                  size: 21),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  color: i == selected ? AppColors.text : AppColors.muted,
-                ),
+  Widget _item(
+    BuildContext context,
+    int i,
+    int selected,
+    IconData icon,
+    String label,
+    String route,
+  ) {
+    return Expanded(
+      child: InkWell(
+        onTap: () => context.go(route),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: i == selected ? AppColors.text : AppColors.muted,
+              size: 21,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                color: i == selected ? AppColors.text : AppColors.muted,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      );
+      ),
+    );
+  }
 }
