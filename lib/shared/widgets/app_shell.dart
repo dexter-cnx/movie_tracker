@@ -31,9 +31,12 @@ class AppShell extends StatelessWidget {
           child: Row(
             children: [
               _item(context, 0, index, Icons.home_filled, 'home'.tr(), '/'),
-              _item(context, 1, index, Icons.explore_rounded, 'explore'.tr(), '/explore'),
-              _item(context, 2, index, Icons.bookmark_rounded, 'watchlist'.tr(), '/watchlist'),
-              _item(context, 3, index, Icons.calendar_month_rounded, 'calendar'.tr(), '/calendar'),
+              _item(context, 1, index, Icons.explore_rounded, 'explore'.tr(),
+                  '/explore'),
+              _item(context, 2, index, Icons.bookmark_rounded, 'watchlist'.tr(),
+                  '/watchlist'),
+              _item(context, 3, index, Icons.calendar_month_rounded,
+                  'calendar'.tr(), '/calendar'),
             ],
           ),
         ),
@@ -44,21 +47,31 @@ class AppShell extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: AppColors.button,
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .55), blurRadius: 18, offset: const Offset(0, 8))],
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: .55),
+                blurRadius: 18,
+                offset: const Offset(0, 8))
+          ],
         ),
-        child: const Icon(Icons.add_rounded, color: AppColors.onButton, size: 30),
+        child:
+            const Icon(Icons.add_rounded, color: AppColors.onButton, size: 30),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
-  Widget _item(BuildContext context, int i, int selected, IconData icon, String label, String route) => Expanded(
+  Widget _item(BuildContext context, int i, int selected, IconData icon,
+          String label, String route) =>
+      Expanded(
         child: InkWell(
           onTap: () => context.go(route),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: i == selected ? AppColors.text : AppColors.muted, size: 21),
+              Icon(icon,
+                  color: i == selected ? AppColors.text : AppColors.muted,
+                  size: 21),
               const SizedBox(height: 4),
               Text(
                 label,

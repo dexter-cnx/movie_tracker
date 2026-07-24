@@ -117,9 +117,7 @@ class MovieDetailPage extends ConsumerWidget {
                         BarChartRodData(
                           toY: (active ? score + 1 : 4).toDouble(),
                           width: 13,
-                          color: active
-                              ? AppColors.orange
-                              : AppColors.elevated,
+                          color: active ? AppColors.orange : AppColors.elevated,
                           borderRadius: BorderRadius.circular(5),
                         ),
                       ],
@@ -156,7 +154,8 @@ class MovieDetailPage extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             movie.overview.isEmpty ? '-' : movie.overview,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.55),
+            style:
+                Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.55),
           ),
           const SizedBox(height: 24),
           Text(
@@ -288,9 +287,8 @@ class MovieDetailPage extends ConsumerWidget {
           Icon(
             icon,
             size: 15,
-            color: icon == Icons.star_rounded
-                ? AppColors.orange
-                : AppColors.text,
+            color:
+                icon == Icons.star_rounded ? AppColors.orange : AppColors.text,
           ),
           const SizedBox(width: 6),
           Text(
@@ -445,10 +443,7 @@ class MovieDetailPage extends ConsumerWidget {
                           child: Text(
                             watchedAt == null
                                 ? 'noDate'.tr()
-                                : watchedAt!
-                                    .toIso8601String()
-                                    .split('T')
-                                    .first,
+                                : watchedAt!.toIso8601String().split('T').first,
                           ),
                         ),
                         TextButton.icon(
@@ -532,8 +527,7 @@ class MovieDetailPage extends ConsumerWidget {
             personalRating:
                 status == WatchStatus.watched ? movie.voteAverage : null,
             addedAt: DateTime.now(),
-            watchedAt:
-                status == WatchStatus.watched ? DateTime.now() : null,
+            watchedAt: status == WatchStatus.watched ? DateTime.now() : null,
             runtimeMinutes: movie.runtime,
             genre: movie.genres.isEmpty ? null : movie.genres.first,
           ),

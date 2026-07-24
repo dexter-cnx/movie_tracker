@@ -7,7 +7,8 @@ class RateLimitInterceptor extends Interceptor {
   final int maxRetries;
 
   @override
-  Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
+  Future<void> onError(
+      DioException err, ErrorInterceptorHandler handler) async {
     if (err.response?.statusCode != 429) {
       return handler.next(err);
     }
@@ -15,7 +16,8 @@ class RateLimitInterceptor extends Interceptor {
     final retryCount = (request.extra['retryCount'] as int?) ?? 0;
     if (retryCount >= maxRetries) return handler.next(err);
 
-    final retryAfter = int.tryParse(err.response?.headers.value('retry-after') ?? '');
+    final retryAfter =
+        int.tryParse(err.response?.headers.value('retry-after') ?? '');
     final delay = Duration(seconds: retryAfter ?? (1 << retryCount));
     await Future<void>.delayed(delay);
 

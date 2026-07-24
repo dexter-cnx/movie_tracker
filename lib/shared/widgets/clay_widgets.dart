@@ -24,7 +24,10 @@ class ClayCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(radius),
           border: Border.all(color: Colors.white.withValues(alpha: .035)),
           boxShadow: const [
-            BoxShadow(color: Color(0x66000000), blurRadius: 22, offset: Offset(0, 10)),
+            BoxShadow(
+                color: Color(0x66000000),
+                blurRadius: 22,
+                offset: Offset(0, 10)),
           ],
         ),
         child: child,
@@ -73,7 +76,10 @@ class Poster extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radius),
-        boxShadow: const [BoxShadow(color: Color(0x77000000), blurRadius: 18, offset: Offset(0, 8))],
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x77000000), blurRadius: 18, offset: Offset(0, 8))
+        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(radius),
@@ -88,14 +94,17 @@ class Poster extends StatelessWidget {
                     child: Text(
                       title ?? '🎬',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.text),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w900, color: AppColors.text),
                     ),
                   ),
                 )
               : CachedNetworkImage(
                   imageUrl: url,
                   fit: BoxFit.cover,
-                  errorWidget: (_, __, ___) => const Center(child: Icon(Icons.movie_rounded, color: AppColors.secondary)),
+                  errorWidget: (_, __, ___) => const Center(
+                      child: Icon(Icons.movie_rounded,
+                          color: AppColors.secondary)),
                 ),
         ),
       ),
