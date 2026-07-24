@@ -8,16 +8,36 @@ void main() {
     final file = File('assets/langs/langs.csv');
     expect(file.existsSync(), isTrue, reason: 'assets/langs/langs.csv must exist');
 
-    final rows = const CsvToListConverter(shouldParseNumbers: false).convert(file.readAsStringSync());
+    // Normalize line endings first so the test behaves consistently on
+    // macOS/Linux (LF) and Windows (CRLF). CsvToListConverter otherwise uses
+    // its configured EOL literally, which can make the whole file look like
+    // a single CSV row when the line ending does not match.
+    final csvText = file
+        .readAsStringSync()
+        .replaceAll('\r\n', '\n')
+        .replaceAll('\r', '\n');
+
+    final rows = const CsvToListConverter(
+      eol: '\n',
+      shouldParseNumbers: false,
+    ).convert(csvText);
+
     expect(rows, isNotEmpty);
     expect(rows.first, ['key', 'en', 'th']);
 
     final keys = <String>{};
     for (var i = 1; i < rows.length; i++) {
       final row = rows[i];
-      expect(row.length, 3, reason: 'Invalid column count at CSV row ${i + 1}: $row');
-      expect(row.every((cell) => cell.toString().trim().isNotEmpty), isTrue,
-          reason: 'Blank localization value at CSV row ${i + 1}: $row');
+      expect(
+        row.length,
+        3,
+        reason: 'Invalid column count at CSV row ${i + 1}: $row',
+      );
+      expect(
+        row.every((cell) => cell.toString().trim().isNotEmpty),
+        isTrue,
+        reason: 'Blank localization value at CSV row ${i + 1}: $row',
+      );
       final key = row.first.toString();
       expect(keys.add(key), isTrue, reason: 'Duplicate localization key: $key');
     }
