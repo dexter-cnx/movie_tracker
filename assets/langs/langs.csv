@@ -99,3 +99,7 @@ invalidCredentials,Enter a valid email and a password of at least 6 characters.,
 authenticatedAs,Signed in as {},เข้าสู่ระบบเป็น {}
 networkOnline,Back online,กลับมาออนไลน์แล้ว
 networkOffline,No network connection,ไม่มีการเชื่อมต่อเครือข่าย
+account,Account,บัญชี
+sessionUnavailable,Session unavailable,ไม่สามารถใช้งานเซสชันได้
+signInAgain,Sign in again to continue,กรุณาเข้าสู่ระบบอีกครั้งเพื่อดำเนินการต่อ
+sessionExpires,Session expires {},เซสชันหมดอายุ {}
