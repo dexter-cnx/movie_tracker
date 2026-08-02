@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:popcorn_movie_tracker/core/layout/responsive_layout.dart';
 import 'package:popcorn_movie_tracker/core/theme/app_theme.dart';
 import 'package:popcorn_movie_tracker/features/watchlist/domain/watchlist_item.dart';
 import 'package:popcorn_movie_tracker/features/watchlist/presentation/watchlist_controller.dart';
@@ -11,6 +12,12 @@ class WatchlistPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final size = MediaQuery.sizeOf(context);
+    final ratioClass = ResponsiveLayout.classOf(size);
+    final movieColumns = ResponsiveLayout.gridColumns(size);
+    final statsColumns = movieColumns.clamp(2, 4);
+    final horizontalPadding = ResponsiveLayout.horizontalPadding(size);
+
     final items = ref.watch(watchlistControllerProvider);
     final watched =
         items.where((item) => item.status == WatchStatus.watched).toList();
@@ -46,7 +53,12 @@ class WatchlistPage extends ConsumerWidget {
 
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+        padding: EdgeInsets.fromLTRB(
+          horizontalPadding,
+          20,
+          horizontalPadding,
+          120,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -56,12 +68,14 @@ class WatchlistPage extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
             GridView.count(
-              crossAxisCount: 2,
+              crossAxisCount: statsColumns,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: 1.55,
+              childAspectRatio: ratioClass == DeviceRatioClass.tallPortrait
+                  ? 1.55
+                  : 1.85,
               children: [
                 _stat(
                   context,
@@ -103,9 +117,11 @@ class WatchlistPage extends ConsumerWidget {
               GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: .65,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: movieColumns,
+                  childAspectRatio: ratioClass == DeviceRatioClass.wide
+                      ? .74
+                      : .65,
                   crossAxisSpacing: 14,
                   mainAxisSpacing: 14,
                 ),
