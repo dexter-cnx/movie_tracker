@@ -15,7 +15,7 @@ class WatchlistPage extends ConsumerWidget {
     final size = MediaQuery.sizeOf(context);
     final ratioClass = ResponsiveLayout.classOf(size);
     final movieColumns = ResponsiveLayout.gridColumns(size);
-    final statsColumns = movieColumns.clamp(2, 4);
+    final statsColumns = movieColumns.clamp(2, 4).toInt();
     final horizontalPadding = ResponsiveLayout.horizontalPadding(size);
 
     final items = ref.watch(watchlistControllerProvider);
