@@ -1,5 +1,6 @@
 import 'package:popcorn_movie_tracker/features/movies/domain/entities/movie.dart';
 import 'package:popcorn_movie_tracker/features/movies/domain/entities/movie_load_result.dart';
+import 'package:popcorn_movie_tracker/features/movies/domain/entities/paged_movies.dart';
 
 abstract interface class MovieRepository {
   Future<List<Movie>> getPopular(String language);
@@ -13,6 +14,7 @@ abstract interface class MovieRepository {
   Future<List<Movie>> getNowPlaying(String language);
   Future<Movie> getDetails(int id, String language);
   Future<List<Movie>> search(String query, String language);
+  Future<PagedMovies> searchPage(String query, String language, int page);
   Future<List<Genre>> getGenres(String language);
   Future<List<Movie>> discoverByGenre(int? genreId, String language);
 }
