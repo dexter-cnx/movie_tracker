@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:popcorn_movie_tracker/core/theme/app_theme.dart';
+import 'package:popcorn_movie_tracker/features/auth/presentation/login_page.dart';
 import 'package:popcorn_movie_tracker/features/calendar/presentation/release_calendar_page.dart';
 import 'package:popcorn_movie_tracker/features/home/presentation/home_page.dart';
 import 'package:popcorn_movie_tracker/features/movie_detail/presentation/movie_detail_page.dart';
@@ -22,6 +23,7 @@ final _router = GoRouter(
         GoRoute(path: '/profile', builder: (_, __) => const ProfilePage()),
       ],
     ),
+    GoRoute(path: '/login', builder: (_, __) => const LoginPage()),
     GoRoute(
       path: '/calendar',
       builder: (_, __) => const ReleaseCalendarPage(),
