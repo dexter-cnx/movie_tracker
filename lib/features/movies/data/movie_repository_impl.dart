@@ -4,6 +4,7 @@ import 'package:popcorn_movie_tracker/features/movies/data/movie_cache_local_dat
 import 'package:popcorn_movie_tracker/features/movies/data/tmdb_remote_data_source.dart';
 import 'package:popcorn_movie_tracker/features/movies/domain/entities/movie.dart';
 import 'package:popcorn_movie_tracker/features/movies/domain/entities/movie_load_result.dart';
+import 'package:popcorn_movie_tracker/features/movies/domain/entities/paged_movies.dart';
 import 'package:popcorn_movie_tracker/features/movies/domain/repositories/movie_repository.dart';
 
 class MovieRepositoryImpl implements MovieRepository {
@@ -97,6 +98,18 @@ class MovieRepositoryImpl implements MovieRepository {
             .where((m) => m.title.toLowerCase().contains(q.toLowerCase()))
             .toList(),
       );
+
+  @override
+  Future<PagedMovies> searchPage(String q, String l, int page) async {
+    try {
+      return await remote.searchPage(q, l, page);
+    } catch (_) {
+      final matches = mockMovies
+          .where((m) => m.title.toLowerCase().contains(q.toLowerCase()))
+          .toList(growable: false);
+      return PagedMovies(items: matches, page: 1, totalPages: 1);
+    }
+  }
 
   @override
   Future<List<Genre>> getGenres(String l) =>
