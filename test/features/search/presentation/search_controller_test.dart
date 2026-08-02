@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:popcorn_movie_tracker/core/async/debounced_latest_task.dart';
 import 'package:popcorn_movie_tracker/features/movies/domain/entities/movie.dart';
-import 'package:popcorn_movie_tracker/features/movies/domain/entities/movie_load_result.dart';
 import 'package:popcorn_movie_tracker/features/movies/domain/entities/paged_movies.dart';
 import 'package:popcorn_movie_tracker/features/movies/domain/repositories/movie_repository.dart';
 import 'package:popcorn_movie_tracker/features/search/presentation/search_controller.dart';
