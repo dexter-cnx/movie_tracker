@@ -14,6 +14,7 @@ const movie1 = Movie(
   overview: '',
   releaseDate: '2024-01-01',
   voteAverage: 8,
+  genreIds: [],
 );
 const movie2 = Movie(
   id: 2,
@@ -21,6 +22,7 @@ const movie2 = Movie(
   overview: '',
   releaseDate: '2024-03-01',
   voteAverage: 9,
+  genreIds: [],
 );
 
 void main() {
