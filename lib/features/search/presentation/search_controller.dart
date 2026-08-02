@@ -203,9 +203,7 @@ class MovieSearchController extends StateNotifier<MovieSearchState> {
   }
 
   Future<void> retry() {
-    if (state.query.isNotEmpty) {
-      return queryChanged(state.query);
-    }
+    if (state.query.isNotEmpty) return queryChanged(state.query);
     return discover(genreId: state.genreId);
   }
 
@@ -218,10 +216,8 @@ class MovieSearchController extends StateNotifier<MovieSearchState> {
 
 final movieSearchControllerProvider = StateNotifierProvider.autoDispose
     .family<MovieSearchController, MovieSearchState, String>((ref, language) {
-  final controller = MovieSearchController(
+  return MovieSearchController(
     repository: ref.watch(movieRepositoryProvider),
     language: language,
   );
-  ref.onDispose(controller.dispose);
-  return controller;
 });
