@@ -2,7 +2,9 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:popcorn_movie_tracker/core/theme/app_theme.dart';
+import 'package:popcorn_movie_tracker/features/auth/presentation/auth_controller.dart';
 import 'package:popcorn_movie_tracker/features/profile/presentation/profile_controller.dart';
 import 'package:popcorn_movie_tracker/shared/widgets/clay_widgets.dart';
 
@@ -12,6 +14,7 @@ class ProfilePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final preferences = ref.watch(profileControllerProvider);
+    final auth = ref.watch(authControllerProvider);
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -19,8 +22,10 @@ class ProfilePage extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('profile'.tr(),
-                style: Theme.of(context).textTheme.headlineLarge),
+            Text(
+              'profile'.tr(),
+              style: Theme.of(context).textTheme.headlineLarge,
+            ),
             const SizedBox(height: 20),
             ClayCard(
               child: Row(
@@ -69,8 +74,73 @@ class ProfilePage extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 26),
-            Text('settings'.tr(),
-                style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'account'.tr(),
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 12),
+            ClayCard(
+              padding: EdgeInsets.zero,
+              child: auth.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (_, __) => ListTile(
+                  leading: const Icon(Icons.error_outline_rounded),
+                  title: Text('sessionUnavailable'.tr()),
+                  subtitle: Text('signInAgain'.tr()),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => context.push('/login'),
+                ),
+                data: (session) {
+                  if (session == null) {
+                    return ListTile(
+                      leading: const Icon(Icons.login_rounded),
+                      title: Text('signIn'.tr()),
+                      subtitle: Text('demoAuthenticationDescription'.tr()),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () => context.push('/login'),
+                    );
+                  }
+
+                  return Column(
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.verified_user_rounded),
+                        title: Text(
+                          'authenticatedAs'.tr(args: [session.userId]),
+                        ),
+                        subtitle: Text(
+                          'sessionExpires'.tr(
+                            args: [
+                              DateFormat.yMd(context.locale.toLanguageTag())
+                                  .add_Hm()
+                                  .format(session.expiresAt.toLocal()),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.logout_rounded),
+                        title: Text('signOut'.tr()),
+                        onTap: () async {
+                          await ref
+                              .read(authControllerProvider.notifier)
+                              .logout();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 26),
+            Text(
+              'settings'.tr(),
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 12),
             ClayCard(
               padding: EdgeInsets.zero,
@@ -111,7 +181,10 @@ class ProfilePage extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 26),
-            Text('more'.tr(), style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'more'.tr(),
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 12),
             ClayCard(
               padding: EdgeInsets.zero,
@@ -124,10 +197,18 @@ class ProfilePage extends ConsumerWidget {
                     onTap: () => context.push('/calendar'),
                   ),
                   const Divider(height: 1),
-                  ListTile(
-                    leading: const Icon(Icons.info_outline_rounded),
-                    title: Text('aboutApp'.tr()),
-                    subtitle: Text('appVersion'.tr(args: ['1.0.0'])),
+                  FutureBuilder<PackageInfo>(
+                    future: PackageInfo.fromPlatform(),
+                    builder: (context, snapshot) {
+                      final version = snapshot.hasData
+                          ? '${snapshot.data!.version}+${snapshot.data!.buildNumber}'
+                          : '—';
+                      return ListTile(
+                        leading: const Icon(Icons.info_outline_rounded),
+                        title: Text('aboutApp'.tr()),
+                        subtitle: Text('appVersion'.tr(args: [version])),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -172,25 +253,29 @@ class ProfilePage extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('editProfile'.tr()),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: InputDecoration(labelText: 'displayName'.tr()),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: emailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(labelText: 'email'.tr()),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: genreController,
-              decoration: InputDecoration(labelText: 'favoriteGenre'.tr()),
-            ),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                textInputAction: TextInputAction.next,
+                decoration: InputDecoration(labelText: 'displayName'.tr()),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                decoration: InputDecoration(labelText: 'email'.tr()),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: genreController,
+                decoration: InputDecoration(labelText: 'favoriteGenre'.tr()),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
