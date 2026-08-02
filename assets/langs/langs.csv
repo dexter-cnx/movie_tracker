@@ -90,3 +90,12 @@ retry,Retry,ลองอีกครั้ง
 offlineData,Offline data,ข้อมูลออฟไลน์
 staleCacheNotice,Showing previously cached movies,กำลังแสดงข้อมูลภาพยนตร์ที่บันทึกไว้
 freshCacheNotice,Loaded from local cache,โหลดจากแคชในเครื่อง
+signIn,Sign in,เข้าสู่ระบบ
+signOut,Sign out,ออกจากระบบ
+password,Password,รหัสผ่าน
+demoAuthentication,Demo authentication,ระบบเข้าสู่ระบบตัวอย่าง
+demoAuthenticationDescription,Uses secure storage and synchronized token refresh without requiring a real backend.,ใช้ Secure Storage และ Token Refresh แบบป้องกันการเรียกซ้ำโดยไม่ต้องมี Backend จริง
+invalidCredentials,Enter a valid email and a password of at least 6 characters.,กรอกอีเมลให้ถูกต้องและรหัสผ่านอย่างน้อย 6 ตัวอักษร
+authenticatedAs,Signed in as {},เข้าสู่ระบบเป็น {}
+networkOnline,Back online,กลับมาออนไลน์แล้ว
+networkOffline,No network connection,ไม่มีการเชื่อมต่อเครือข่าย
