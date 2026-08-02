@@ -2,7 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:package_info_plus/package_info_plus.dart';
+import 'package:popcorn_movie_tracker/core/app_info/app_info_provider.dart';
 import 'package:popcorn_movie_tracker/core/theme/app_theme.dart';
 import 'package:popcorn_movie_tracker/features/auth/presentation/auth_controller.dart';
 import 'package:popcorn_movie_tracker/features/profile/presentation/profile_controller.dart';
@@ -15,6 +15,7 @@ class ProfilePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final preferences = ref.watch(profileControllerProvider);
     final auth = ref.watch(authControllerProvider);
+    final appInfo = ref.watch(appInfoProvider);
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -104,6 +105,11 @@ class ProfilePage extends ConsumerWidget {
                     );
                   }
 
+                  final expiresAt = session.expiresAt.toLocal();
+                  final materialLocalizations = MaterialLocalizations.of(context);
+                  final expiry = '${materialLocalizations.formatShortDate(expiresAt)} '
+                      '${materialLocalizations.formatTimeOfDay(TimeOfDay.fromDateTime(expiresAt))}';
+
                   return Column(
                     children: [
                       ListTile(
@@ -112,13 +118,7 @@ class ProfilePage extends ConsumerWidget {
                           'authenticatedAs'.tr(args: [session.userId]),
                         ),
                         subtitle: Text(
-                          'sessionExpires'.tr(
-                            args: [
-                              DateFormat.yMd(context.locale.toLanguageTag())
-                                  .add_Hm()
-                                  .format(session.expiresAt.toLocal()),
-                            ],
-                          ),
+                          'sessionExpires'.tr(args: [expiry]),
                         ),
                       ),
                       const Divider(height: 1),
@@ -197,18 +197,14 @@ class ProfilePage extends ConsumerWidget {
                     onTap: () => context.push('/calendar'),
                   ),
                   const Divider(height: 1),
-                  FutureBuilder<PackageInfo>(
-                    future: PackageInfo.fromPlatform(),
-                    builder: (context, snapshot) {
-                      final version = snapshot.hasData
-                          ? '${snapshot.data!.version}+${snapshot.data!.buildNumber}'
-                          : '—';
-                      return ListTile(
-                        leading: const Icon(Icons.info_outline_rounded),
-                        title: Text('aboutApp'.tr()),
-                        subtitle: Text('appVersion'.tr(args: [version])),
-                      );
-                    },
+                  ListTile(
+                    leading: const Icon(Icons.info_outline_rounded),
+                    title: Text('aboutApp'.tr()),
+                    subtitle: Text(
+                      'appVersion'.tr(
+                        args: [appInfo.valueOrNull?.displayVersion ?? '—'],
+                      ),
+                    ),
                   ),
                 ],
               ),
