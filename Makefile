@@ -41,7 +41,7 @@ test:
 	$(FLUTTER) test
 
 test-unit:
-	$(FLUTTER) test test/core test/features/movies test/features/watchlist test/features/profile test/features/auth test/localization
+	$(FLUTTER) test test/core test/features/movies test/features/watchlist test/features/profile test/features/auth test/features/search test/localization
 
 test-widget:
 	$(FLUTTER) test test/widgets
