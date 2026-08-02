@@ -44,7 +44,9 @@ class MovieCacheLocalDataSource {
     });
   }
 
-  Future<void> clear() => box.clear();
+  Future<void> clear() async {
+    await box.clear();
+  }
 
   static Map<String, dynamic> _movieToMap(Movie movie) => <String, dynamic>{
         'id': movie.id,
