@@ -17,25 +17,22 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   const logger = DeveloperAppLogger();
-  const crashReporter = LoggingCrashReporter(logger);
+  const crashService = CrashService(LoggingCrashReporter(logger));
+  await crashService.initialize();
 
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
-    crashReporter.record(
-      details.exception,
-      details.stack ?? StackTrace.current,
-      fatal: false,
-      reason: details.context?.toDescription(),
+    crashService.recordFlutterError(
+      FlutterErrorDetailsAdapter(
+        exception: details.exception,
+        stackTrace: details.stack ?? StackTrace.current,
+        reason: details.context?.toDescription(),
+      ),
     );
   };
 
   PlatformDispatcher.instance.onError = (error, stackTrace) {
-    crashReporter.record(
-      error,
-      stackTrace,
-      fatal: true,
-      reason: 'Uncaught platform-dispatcher error',
-    );
+    crashService.recordPlatformError(error, stackTrace);
     return true;
   };
 
@@ -47,6 +44,14 @@ Future<void> main() async {
     Hive.openBox<Map>(UserPreferencesLocalDataSource.boxName),
     Hive.openBox<Map>(MovieCacheLocalDataSource.boxName),
   ]);
+
+  await crashService.breadcrumb(
+    'Application bootstrap completed',
+    context: {
+      'locales': 'en,th',
+      'storage': 'hive',
+    },
+  );
 
   runApp(
     ProviderScope(
