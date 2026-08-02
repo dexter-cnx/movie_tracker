@@ -1,9 +1,11 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:popcorn_movie_tracker/core/connectivity/connectivity_service.dart';
 import 'package:popcorn_movie_tracker/core/theme/app_theme.dart';
 
-class AppShell extends StatelessWidget {
+class AppShell extends ConsumerWidget {
   const AppShell({super.key, required this.child});
   final Widget child;
 
@@ -15,10 +17,59 @@ class AppShell extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final index = _index(GoRouterState.of(context).uri.path);
+    final networkStatus = ref.watch(networkStatusProvider);
+    final offline = networkStatus.valueOrNull == NetworkStatus.offline;
+
     return Scaffold(
-      body: child,
+      body: Column(
+        children: [
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            child: offline
+                ? Material(
+                    key: const ValueKey('offline-banner'),
+                    color: AppColors.orange,
+                    child: SafeArea(
+                      bottom: false,
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.cloud_off_rounded,
+                                size: 18,
+                                color: Colors.black,
+                              ),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  'networkOffline'.tr(),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink(key: ValueKey('online-space')),
+          ),
+          Expanded(child: child),
+        ],
+      ),
       extendBody: true,
       bottomNavigationBar: Container(
         height: 70,
@@ -31,12 +82,30 @@ class AppShell extends StatelessWidget {
           child: Row(
             children: [
               _item(context, 0, index, Icons.home_filled, 'home'.tr(), '/'),
-              _item(context, 1, index, Icons.explore_rounded, 'explore'.tr(),
-                  '/explore'),
-              _item(context, 2, index, Icons.bookmark_rounded, 'watchlist'.tr(),
-                  '/watchlist'),
-              _item(context, 3, index, Icons.person_rounded, 'profile'.tr(),
-                  '/profile'),
+              _item(
+                context,
+                1,
+                index,
+                Icons.explore_rounded,
+                'explore'.tr(),
+                '/explore',
+              ),
+              _item(
+                context,
+                2,
+                index,
+                Icons.bookmark_rounded,
+                'watchlist'.tr(),
+                '/watchlist',
+              ),
+              _item(
+                context,
+                3,
+                index,
+                Icons.person_rounded,
+                'profile'.tr(),
+                '/profile',
+              ),
             ],
           ),
         ),
