@@ -13,7 +13,7 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Checkout
@@ -44,6 +44,20 @@ jobs:
 
       - name: Run tests with coverage
         run: flutter test --coverage
+
+      - name: Enforce coverage threshold
+        env:
+          COVERAGE_MIN: '55'
+        run: |
+          awk -F: -v min="$COVERAGE_MIN" '
+            /^LF:/{found+=$2}
+            /^LH:/{hit+=$2}
+            END {
+              pct=(found==0?0:hit*100/found)
+              printf "Line coverage: %.2f%% (minimum %s%%)\n", pct, min
+              if (pct+0.0001 < min) exit 1
+            }
+          ' coverage/lcov.info
 
       - name: Upload coverage
         if: always()
