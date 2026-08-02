@@ -1,28 +1,12 @@
 # Code Walkthrough — Popcorn Movie Tracker & Watchlist
 
-เอกสารนี้อธิบาย source code ของ branch `feat/production-phase-1` แบบ file-by-file และ flow-by-flow สำหรับใช้ review architecture, เตรียมสัมภาษณ์งาน และอธิบายเหตุผลเชิงวิศวกรรมของระบบ
+เอกสารนี้อธิบาย source ของ branch `feat/production-phase-2-3` แบบ file-by-file และ flow-by-flow สำหรับใช้ review architecture, เตรียมสัมภาษณ์งาน และอธิบายเหตุผลเชิงวิศวกรรมของระบบ
 
-เนื้อหาครอบคลุมตั้งแต่ application startup, dependency composition, navigation, REST API, JSON mapping, retry, typed failures, Hive cache, stale fallback, Riverpod state, responsive layout ที่ตัดสินใจจากอัตราส่วนหน้าจอ, Profile/Settings, Watchlist, localization, unit/widget/golden/integration tests และ GitHub Actions CI
-
-> เอกสารนี้อธิบาย implementation ปัจจุบันตาม source จริง ไม่ได้อ้างว่าเป็น Clean Architecture เต็มรูปแบบทุกจุด โปรเจกต์ใช้แนวทาง lightweight และจงใจลด abstraction บางส่วนเพื่อไม่ให้ demo application มี boilerplate มากเกินไป
+โปรเจกต์ใช้ lightweight Clean Architecture + MVVM-style presentation โดยรักษา boundary สำคัญระหว่าง UI, Riverpod state, repository contract, data source และ storage แต่ไม่เพิ่ม Use Case class สำหรับทุก operation เพื่อหลีกเลี่ยง boilerplate ที่เกินขนาดของ portfolio application
 
 ---
 
-# 1. ภาพรวมระบบ
-
-Popcorn เป็นแอป Flutter สำหรับ:
-
-- สำรวจภาพยนตร์จาก TMDB
-- แสดง Trending, Popular, Top Rated, Upcoming และ Now Playing
-- ค้นหาภาพยนตร์และกรองตาม Genre
-- ดูรายละเอียดภาพยนตร์, Cast, Trailer และ Similar Movies
-- บันทึก Want to Watch, Watched และ Favorite ลง Hive
-- เก็บ Personal Rating, Notes และ Watched Date
-- สร้าง Profile และตั้งค่าภาษา
-- ใช้งานข้อมูลจาก cache เมื่อ network ไม่เสถียร
-- fallback เป็น mock data เมื่อไม่มีทั้ง network และ cache
-
-โครงสร้างข้อมูลหลัก:
+# 1. System Overview
 
 ```text
 Flutter UI
@@ -33,47 +17,52 @@ Domain Repository Contract
     ↓
 Repository Implementation
     ↓
-Remote Data Source / Local Data Source
+Remote / Local Data Sources
     ↓
-Dio / Hive
+Dio / Hive / Secure Storage
     ↓
-TMDB API / Device Storage
+TMDB / Device Storage
 ```
 
-ระบบแบ่ง concern ออกเป็น:
+ระบบแบ่งเป็น:
 
 ```text
 core/
-  network, errors, layout, theme
+  async, config, connectivity, crash, errors,
+  layout, lifecycle, logging, network, theme
+
+features/auth/
+  secure session and refresh flow
 
 features/movies/
-  data, domain, presentation
+  TMDB, JSON mapping, cache, pagination
 
 features/watchlist/
-  data, domain, presentation
+  persistent local collection
 
 features/profile/
-  data, domain, presentation
+  profile and settings
 
 features/home, search, movie_detail, calendar/
   presentation screens
-
-shared/widgets/
-  reusable UI components
 ```
 
 ---
 
-# 2. Application Startup
+# 2. Application Bootstrap
 
-## ไฟล์: `lib/main.dart`
+## `lib/main.dart`
 
-`main()` เป็น composition root ระดับ application มีหน้าที่ initialize dependency ที่ต้องพร้อมก่อนสร้าง widget tree
-
-ลำดับการทำงาน:
+ลำดับ startup:
 
 ```text
 WidgetsFlutterBinding.ensureInitialized()
+        ↓
+Install AppLogger / CrashReporter
+        ↓
+FlutterError.onError
+        ↓
+PlatformDispatcher.instance.onError
         ↓
 EasyLocalization.ensureInitialized()
         ↓
@@ -81,7 +70,7 @@ dotenv.load('assets/.env')
         ↓
 Hive.initFlutter()
         ↓
-เปิด Hive boxes พร้อมกัน
+Open watchlist, preferences, movie-cache boxes
         ↓
 ProviderScope
         ↓
@@ -90,293 +79,237 @@ EasyLocalization
 PopcornApp
 ```
 
-Hive boxes ที่เปิดใน Phase 1:
+Global error handling แยก 2 ช่องทาง:
 
-```text
-watchlist_items
-user_preferences
-movie_cache
-```
+- `FlutterError.onError` สำหรับ framework error
+- `PlatformDispatcher.instance.onError` สำหรับ uncaught asynchronous/platform error
 
-การใช้ `Future.wait()` ทำให้เปิด boxes ที่ไม่ขึ้นต่อกันพร้อมกัน แทนการ await ทีละ box
-
-เหตุผลที่ต้องเปิด Hive ก่อน `runApp()`:
-
-- Provider ของ Watchlist ใช้ `Hive.box<Map>()`
-- Provider ของ Profile ใช้ preferences box
-- Movie Repository ใช้ cache box
-- หาก box ยังไม่เปิด การสร้าง provider อาจ throw ตั้งแต่หน้าแรก
-
-`ProviderScope` เป็น root container ของ Riverpod ส่วน `EasyLocalization` เป็น root localization scope
-
-สิ่งที่ app startup ยังควรพัฒนาต่อใน production:
-
-- แยก bootstrap error screen
-- รองรับ `.env` ที่ไม่มีไฟล์โดยไม่ crash
-- global error reporting
-- migration version ของ Hive
-- startup performance trace
+ทั้งสองส่งเข้า `CrashReporter` abstraction แทนการผูกกับ Crashlytics/Sentry โดยตรง
 
 ---
 
-# 3. Application Routing
+# 3. Routing
 
-## ไฟล์: `lib/app.dart`
+## `lib/app.dart`
 
-แอปใช้ `GoRouter` และ `ShellRoute`
-
-เส้นทางหลัก:
+Main routes:
 
 ```text
 /
 /explore
 /watchlist
 /profile
+```
+
+Top-level routes:
+
+```text
+/login
 /calendar
 /movie/:id
 ```
 
-Main navigation routes อยู่ภายใน `ShellRoute` เพื่อแชร์ `AppShell`
+Main tabs ใช้ `ShellRoute` เพื่อแชร์ `AppShell`
+
+Login แยกเป็น top-level route เพื่อให้เปิดจาก Profile หรือ auth redirect ในอนาคตได้
+
+Movie detail รับ `movieId` จาก path parameter และใช้ `int.tryParse` เพื่อป้องกัน parse exception
+
+---
+
+# 4. Environment Configuration
+
+## `lib/core/config/app_environment.dart`
+
+`AppEnvironment`:
 
 ```text
-ShellRoute
- ├── Home
- ├── Explore
- ├── Watchlist
- └── Profile
+development
+staging
+production
 ```
 
-`/calendar` และ `/movie/:id` เป็นเส้นทางที่เปิดเป็นหน้าระดับบน ทำให้ไม่ต้องแสดง bottom navigation ในทุกกรณี
+`AppConfig` กำหนด policy:
 
-Movie Detail รับ ID จาก path parameter:
+```text
+appName
+enableVerboseLogs
+enableMockFallback
+```
+
+Production config ปิด verbose log และ mock fallback โดยตั้งใจ แม้ native flavor wiring ยังต้องตั้งใน Android/iOS project
+
+---
+
+# 5. Structured Logging
+
+## `lib/core/logging/app_logger.dart`
+
+`AppLogger` มี method:
+
+```text
+debug
+info
+warning
+error
+```
+
+`DeveloperAppLogger` ใช้ `dart:developer.log`
+
+ก่อนเขียน context จะ redact key:
+
+```text
+authorization
+token
+accessToken
+refreshToken
+password
+email
+```
+
+ตัวอย่าง:
+
+```text
+{accessToken: abc, page: 2}
+        ↓
+{accessToken: <redacted>, page: 2}
+```
+
+การ redact ที่ logger boundary ลดโอกาสที่ developer เผลอส่ง credential ไปยัง console/crash service
+
+---
+
+# 6. Crash Reporter
+
+## `lib/core/crash/crash_reporter.dart`
+
+`CrashReporter.record()` รับ:
+
+```text
+error
+stackTrace
+fatal
+reason
+```
+
+`LoggingCrashReporter` เป็น default implementation สำหรับ portfolio
+
+Production สามารถสร้าง:
+
+```text
+CrashlyticsCrashReporter
+SentryCrashReporter
+```
+
+โดยไม่แก้ caller ใน bootstrap
+
+---
+
+# 7. Connectivity Stream
+
+## `lib/core/connectivity/connectivity_service.dart`
+
+Domain-facing enum:
+
+```text
+NetworkStatus.online
+NetworkStatus.offline
+```
+
+Interface:
 
 ```dart
-movieId: int.tryParse(state.pathParameters['id'] ?? '') ?? 0
+Stream<NetworkStatus> get changes;
+Future<NetworkStatus> current();
 ```
 
-จุดแข็ง:
+`PluginConnectivityService` map result จาก `connectivity_plus`
 
-- Deep-link-friendly route
-- Shell navigation ไม่ผูกกับแต่ละ page
-- Detail page แยกจาก main tabs
-- route สามารถทดสอบแยกได้
+Riverpod:
 
-จุดที่ควรพัฒนาต่อ:
+```text
+connectivityServiceProvider
+networkStatusProvider
+```
 
-- invalid movie ID route
-- typed route generation
-- authentication redirect
-- route restoration
+`networkStatusProvider` emit current status ก่อน แล้วจึง forward stream changes
+
+ข้อสำคัญ: online transport ไม่ได้ยืนยันว่า TMDB reachable ดังนั้น actual Dio error ยังคงเป็น source of truth ของ request success/failure
 
 ---
 
-# 4. App Shell และ Bottom Navigation
+# 8. Application Lifecycle
 
-## ไฟล์: `lib/shared/widgets/app_shell.dart`
+## `lib/core/lifecycle/app_lifecycle_observer.dart`
 
-`AppShell` ทำหน้าที่:
+Widget ใช้ `WidgetsBindingObserver`
 
-- ครอบ page ปัจจุบันด้วย `Scaffold`
-- แสดง bottom navigation
-- คำนวณ selected index จาก URI
-- route ไป Home, Explore, Watchlist และ Profile
-- แสดง Floating Action Button สำหรับเปิด Search
-
-การเลือก tab ไม่ใช้ local index state แต่ derive จาก route location จึงลดปัญหา tab state กับ URL ไม่ตรงกัน
+Mapping:
 
 ```text
-URI ปัจจุบัน
-   ↓
-_index(location)
-   ↓
-selected bottom-navigation item
+resumed → onResumed
+inactive/hidden/paused/detached → onPaused
 ```
 
-แนวทางนี้เหมาะกับ declarative navigation มากกว่าการเก็บ selected index แยกใน StatefulWidget
+Use cases:
+
+- pause trailer
+- validate auth session เมื่อกลับ foreground
+- refresh stale data
+- flush local draft
+- stop expensive resource ใน background
+
+Observer ถูก remove ใน `dispose()` ป้องกัน callback หลัง widget ถูกทำลาย
 
 ---
 
-# 5. Theme และ Design System
+# 9. Dio and Rate Limit
 
-## ไฟล์: `lib/core/theme/app_theme.dart`
+## `lib/core/network/dio_provider.dart`
 
-`AppColors` เป็น semantic tokens เช่น:
+Dio config:
 
 ```text
-background
-surface
-card
-cardAlt
-text
-secondary
-muted
-divider
-orange
-green
-button
-onButton
+Base URL: https://api.themoviedb.org/3
+Connect timeout: 10 seconds
+Receive timeout: 12 seconds
 ```
 
-ข้อดีของ semantic token:
+TMDB application token อ่านจาก `.env`
 
-- ลด hard-coded color ใน screen
-- เปลี่ยน visual direction จากจุดกลาง
-- Golden test มีความเสถียรกว่า
-- รองรับ theme variant ในอนาคต
+## `lib/core/network/rate_limit_interceptor.dart`
 
-โปรเจกต์ใช้ Cinematic Dark UI:
+429 flow:
 
-- dark background
-- high-contrast white text
-- orange accent
-- rounded cards/posters
-- floating navigation
-- soft borders/shadows
+```text
+429
+ ↓
+read retry count
+ ↓
+max reached?
+ ├── yes → forward error
+ └── no
+      ↓
+Retry-After available?
+ ├── yes → use server delay
+ └── no  → exponential delay
+      ↓
+retry original RequestOptions
+```
 
-Technical debt ปัจจุบันคือ property ชื่อ `AppTheme.light` แต่ implementation เป็น dark theme ควร rename เป็น `AppTheme.dark` หรือ `AppTheme.cinematicDark`
+Default delay:
+
+```text
+1s → 2s → 4s
+```
 
 ---
 
-# 6. Shared Widgets
+# 10. Typed Failures
 
-## ไฟล์: `lib/shared/widgets/clay_widgets.dart`
+## `lib/core/errors/app_failure.dart`
 
-Reusable components หลัก:
-
-### `ClayCard`
-
-รวม decoration, border radius, padding และ shadow ไว้จุดเดียว
-
-### `ClayIconButton`
-
-สร้าง icon action ที่มี visual language เดียวกับ card
-
-### `Poster`
-
-รับ:
-
-```text
-posterPath
-title
-width
-height
-```
-
-กรณีมี TMDB path จะสร้าง URL รูป
-
-```text
-https://image.tmdb.org/t/p/w500{posterPath}
-```
-
-fallback behavior:
-
-```text
-posterPath ไม่มี
-    ↓
-แสดง placeholder
-
-network image error
-    ↓
-แสดง movie icon / fallback content
-```
-
-Widget เหล่านี้มีทั้ง widget tests และ golden test เพื่อป้องกัน visual regression
-
----
-
-# 7. Dio Configuration
-
-## ไฟล์: `lib/core/network/dio_provider.dart`
-
-`dioProvider` สร้าง Dio instance กลาง
-
-ค่าหลัก:
-
-```text
-baseUrl        https://api.themoviedb.org/3
-connectTimeout 10 seconds
-receiveTimeout 12 seconds
-accept         application/json
-```
-
-Token อ่านจาก:
-
-```dart
-dotenv.env['TMDB_BEARER_TOKEN']
-```
-
-และเพิ่ม header เมื่อ token ไม่ว่าง:
-
-```http
-Authorization: Bearer <token>
-```
-
-การสร้าง Dio ผ่าน Riverpod ช่วยให้:
-
-- override ใน test ได้
-- ไม่สร้าง instance ซ้ำตาม screen
-- interceptor ใช้ร่วมกัน
-- dependency chain มองเห็นได้ชัด
-
-TMDB token ในโปรเจกต์นี้เป็น application credential ไม่ใช่ user authentication token ดังนั้นยังไม่ถือเป็น implementation ของ login/refresh-token flow
-
----
-
-# 8. HTTP 429 Retry
-
-## ไฟล์: `lib/core/network/rate_limit_interceptor.dart`
-
-`RateLimitInterceptor` ดัก `DioException` ที่ status code เป็น 429
-
-Flow:
-
-```text
-Request fail
-   ↓
-status == 429 ?
-   ├── No  → handler.next(error)
-   └── Yes
-        ↓
-อ่าน retryCount จาก RequestOptions.extra
-        ↓
-retryCount >= maxRetries ?
-   ├── Yes → ส่ง error ต่อ
-   └── No
-        ↓
-อ่าน Retry-After
-        ↓
-ถ้าไม่มี ใช้ exponential delay
-        ↓
-เพิ่ม retryCount
-        ↓
-dio.fetch(requestOptions)
-```
-
-Delay โดยประมาณ:
-
-```text
-1 second
-2 seconds
-4 seconds
-```
-
-จุดสำคัญคือ retry count ถูกเก็บใน request metadata ทำให้แต่ละ request มี state ของตัวเอง
-
-Tests ครอบคลุม:
-
-- non-429 ไม่ retry
-- 429 retry แล้วสำเร็จ
-- retry ถึง limit แล้วหยุด
-
----
-
-# 9. Typed Failure Mapping
-
-## ไฟล์: `lib/core/errors/app_failure.dart`
-
-Phase 1 เพิ่ม failure hierarchy เพื่อไม่ให้ UI ต้องวิเคราะห์ `DioException` โดยตรง
-
-Failure types:
+Failure hierarchy:
 
 ```text
 NetworkFailure
@@ -388,1181 +321,515 @@ ParsingFailure
 UnknownFailure
 ```
 
-Mapper แปลง technical exception เป็น application-level error
+Presentation ไม่ต้อง import Dio เพื่อแยก 401/429/timeout
 
-ตัวอย่างแนวคิด:
-
-```text
-DioException.connectionTimeout
-    ↓
-TimeoutFailure
-
-HTTP 401
-    ↓
-UnauthorizedFailure
-
-HTTP 429
-    ↓
-RateLimitFailure
-
-HTTP 500+
-    ↓
-ServerFailure
-```
-
-ประโยชน์:
-
-- Presentation ไม่ขึ้นกับ Dio
-- localized error message ทำได้ง่ายขึ้น
-- test error state แบบ deterministic
-- backend/client concern แยกชัดเจน
-
-Phase 1 ยังไม่ได้ทำ global error reporter หรือ crash analytics
+Repository และ UI จึง test failure branch ด้วย application type ที่ stable กว่า plugin exception
 
 ---
 
-# 10. Movie Domain Entity
+# 11. Movie Domain and Mapping
 
-## ไฟล์: `lib/features/movies/domain/entities/movie.dart`
+## `lib/features/movies/domain/entities/movie.dart`
 
-`Movie` เป็น entity ที่ UI และ repository contract ใช้ร่วมกัน
+`Movie` เป็น domain shape ที่ UI ใช้
 
-ข้อมูลสำคัญ:
+## `lib/features/movies/data/models/movie_model.dart`
 
-```text
-id
-title
-overview
-posterPath
-backdropPath
-releaseDate
-voteAverage
-genreIds
-popularity
-runtime
-budget
-revenue
-voteCount
-originalLanguage
-genres
-cast
-trailerKey
-similar
-```
-
-`releaseYear` เป็น computed property ทำให้ UI ไม่ต้อง parse date ซ้ำ
-
-`CastMember` แยกข้อมูล actor ออกจาก raw JSON
-
-Domain entity ไม่ import Dio, Hive หรือ Flutter widget package
-
----
-
-# 11. TMDB JSON Mapping
-
-## ไฟล์: `lib/features/movies/data/models/movie_model.dart`
-
-`MovieModel.fromJson()` เป็น anti-corruption boundary ระหว่าง external API shape กับ domain entity
+`MovieModel.fromJson()` map external TMDB response เป็น domain entity
 
 หน้าที่:
 
-- อ่าน primitive fields
-- normalize missing/null values
-- map genre IDs
-- map genre objects
-- map credits/cast
-- เลือก YouTube Trailer/Teaser
+- normalize null/missing value
+- map genres
+- map cast
+- select trailer
 - map similar movies
 
-ตัวอย่าง default:
-
-```text
-missing id            → 0
-missing title         → Untitled
-missing overview      → empty string
-missing vote_average  → 0
-missing arrays        → empty list
-```
-
-UI จึงไม่ต้องตรวจ raw map หรือ cast type ซ้ำทุกหน้า
-
-Tests ตรวจทั้ง valid JSON และ incomplete JSON
+Raw JSON ไม่ถูกส่งขึ้น presentation
 
 ---
 
 # 12. TMDB Remote Data Source
 
-## ไฟล์: `lib/features/movies/data/tmdb_remote_data_source.dart`
+## `lib/features/movies/data/tmdb_remote_data_source.dart`
 
-Data Source เป็นชั้นเดียวที่รู้ endpoint และ query parameter ของ TMDB
-
-Endpoints:
+รองรับ:
 
 ```text
-/movie/popular
-/trending/movie/week
-/movie/top_rated
-/movie/upcoming
-/movie/now_playing
-/search/movie
-/genre/movie/list
-/discover/movie
-/movie/{id}
+popular
+trending
+top rated
+upcoming
+now playing
+detail
+search
+genres
+discover
+search pagination
 ```
 
-Movie Detail ใช้:
+`searchPage()` map:
 
 ```text
-append_to_response=credits,videos,similar
+results      → List<Movie>
+page         → current page
+total_pages  → totalPages
 ```
 
-ทำให้ detail, cast, videos และ similar movies ถูกดึงใน request เดียว
-
-Data Source ไม่ควรตัดสินใจว่าจะใช้ cache หรือ mock เพราะ policy นั้นเป็นหน้าที่ของ Repository
+`append_to_response=credits,videos,similar` ลดจำนวน request ของ detail screen
 
 ---
 
-# 13. Hive Movie Cache
+# 13. Movie Cache
 
-## ไฟล์: `lib/features/movies/data/movie_cache_local_data_source.dart`
+## `lib/features/movies/data/movie_cache_local_data_source.dart`
 
-`MovieCacheLocalDataSource` เก็บ response list เป็น `Box<Map>`
-
-โครงสร้าง record:
+Cache record:
 
 ```text
-cache key
-  ├── cachedAt
-  └── items[]
+cachedAt
+items
 ```
 
-`CachedMovieList` มี:
+`CachedMovieList.isFresh(ttl, now)` ทำ freshness decision แบบ inject เวลาได้ จึง test deterministic
 
-```dart
-final List<Movie> movies;
-final DateTime cachedAt;
-```
-
-และ method:
-
-```dart
-bool isFresh(Duration ttl, DateTime now)
-```
-
-Cache key แยกตาม use case และภาษา เช่น:
-
-```text
-trending:en-US
-trending:th-TH
-```
-
-เหตุผลที่ต้องรวมภาษาใน key:
-
-- title/overview จาก TMDB อาจ localized
-- ห้ามนำ cache ภาษาอังกฤษไปแสดงแทนภาษาไทยโดยไม่ตั้งใจ
-
-Serialization เก็บ Movie เป็น map และ rebuild entity ตอนอ่าน
-
-Local data source คืน `null` เมื่อ:
-
-- ไม่มี key
-- schema ไม่ถูกต้อง
-- date parse ไม่ได้
-- item structure เสีย
-
-แนวทางนี้ทำให้ corrupt cache ไม่ทำให้แอป crash แต่ repository จะไป network หรือ fallback ต่อ
+Movie ถูก serialize เป็น Hive-compatible map ไม่ใช้ generated adapter
 
 ---
 
-# 14. Cache Policy ใน Repository
+# 14. Repository Cache Policy
 
-## ไฟล์: `lib/features/movies/data/movie_repository_impl.dart`
+## `lib/features/movies/data/movie_repository_impl.dart`
 
-Phase 1 เปลี่ยนจาก mock fallback ตรง ๆ เป็น cache-aware policy
-
-Flow หลัก:
+Trending flow:
 
 ```text
-Repository request
-      ↓
-อ่าน cache
-      ↓
-cache fresh และไม่ได้ force refresh ?
-   ├── Yes → คืน fresh cache
-   └── No
-        ↓
-เรียก remote API
-        ↓
-สำเร็จ ?
-   ├── Yes → เขียน cache → คืน network data
-   └── No
-        ↓
-มี stale cache ?
-   ├── Yes → คืน stale cache พร้อม failure metadata
-   └── No  → คืน mock data พร้อม failure metadata
+read cache
+  ↓
+fresh and not forceRefresh?
+  ├── yes → freshCache result
+  └── no
+       ↓
+remote request
+       ↓
+success?
+  ├── yes → write cache → network result
+  └── no
+       ↓
+stale cache exists?
+  ├── yes → staleCache + failure
+  └── no  → mock + failure
 ```
 
-TTL เริ่มต้น:
+`MovieLoadResult` ส่งทั้ง movies, source และ optional failure
 
-```text
-30 minutes
-```
-
-Repository inject `now` function ได้เพื่อให้ test cache expiry โดยไม่พึ่งเวลาจริง
-
-Force refresh มีไว้สำหรับ:
-
-- pull-to-refresh
-- retry button
-- QA validation
-- bypass fresh cache เมื่อผู้ใช้ร้องขอข้อมูลใหม่
-
-สิ่งที่ repository รับผิดชอบ:
-
-- cache policy
-- remote fallback policy
-- source metadata
-- failure mapping
-
-สิ่งที่ repository ไม่ควรรับผิดชอบ:
-
-- widget rendering
-- localized message
-- navigation
+UI จึงตัดสินใจได้ว่าควรแสดง content พร้อม notice หรือ blocking error
 
 ---
 
-# 15. Movie Load Result Metadata
+# 15. Search Debounce and Latest-Request-Wins
 
-## ไฟล์: `lib/features/movies/domain/entities/movie_load_result.dart`
+## `lib/core/async/debounced_latest_task.dart`
 
-เพื่อให้ UI รู้ว่าข้อมูลมาจากไหน ระบบไม่ได้คืนเพียง `List<Movie>` แต่ใช้ result object
-
-Data source metadata:
+State ภายใน:
 
 ```text
-network
-freshCache
-staleCache
-mock
+Timer
+_generation
+_disposed
 ```
 
-Result ประกอบด้วย:
+ทุก `run()` เพิ่ม generation
+
+เมื่อ operation เสร็จ:
 
 ```text
-movies
-source
-failure (optional)
+generation ตรงกับ latest?
+  ├── yes → publish result
+  └── no  → return null / ignore stale result
 ```
 
-ตัวอย่าง:
+ประโยชน์:
 
-```text
-movies มีข้อมูล
-source = staleCache
-failure = TimeoutFailure
-```
+- ลด request ระหว่างพิมพ์
+- ป้องกัน response เก่าทับ response ใหม่
+- dispose/cancel ได้เมื่อ page ถูกทำลาย
 
-UI สามารถยังแสดง content พร้อม offline banner แทนการแทนทั้งหน้าด้วย error screen
-
-นี่เป็นหลักการสำคัญของ resilient UX:
-
-> data availability และ request success ไม่ใช่สถานะเดียวกันเสมอไป
+Coordinator ไม่ผูกกับ Dio จึงใช้กับ repository, local search หรือ async validation ได้
 
 ---
 
-# 16. Riverpod Providers
+# 16. Pagination
 
-## ไฟล์: `lib/features/movies/presentation/movie_providers.dart`
+## `lib/features/movies/domain/entities/paged_movies.dart`
 
-Dependency composition:
-
-```text
-dioProvider
-    ↓
-TmdbRemoteDataSource
-    ↓
-MovieCacheLocalDataSource
-    ↓
-MovieRepositoryImpl
-    ↓
-movieRepositoryProvider
-```
-
-Providers หลัก:
+Fields:
 
 ```text
-trendingResultProvider
-trendingProvider
-movieDetailProvider
-genresProvider
+items
+page
+totalPages
 ```
 
-`trendingResultProvider` expose metadata ครบ ส่วน compatibility provider สามารถ expose เฉพาะ movie list ให้ UI เดิม
-
-`apiLanguage()` map locale:
+Computed:
 
 ```text
-th → th-TH
-อื่น ๆ → en-US
+hasMore = page < totalPages
 ```
 
-`MovieDetailArg` override equality/hashCode เพราะใช้เป็น family key
+`append(next)`:
 
-หากไม่มี equality ที่ถูกต้อง Riverpod อาจมอง argument ที่มีค่าเท่ากันเป็นคนละ request key
+```text
+old items + next items
+page = next.page
+totalPages = next.totalPages
+```
+
+Repository fallback เมื่อ remote search page fail จะคืน deterministic mock result หนึ่งหน้า
+
+Infinite-scroll controller/UI ยังเป็น known remaining work
 
 ---
 
-# 17. Home Screen Resilient UX
+# 17. Authentication Domain
 
-## ไฟล์: `lib/features/home/presentation/home_page.dart`
+## `lib/features/auth/domain/auth_session.dart`
 
-Home watch:
+Fields:
 
 ```text
-trendingResultProvider(language)
-watchlistControllerProvider
+userId
+accessToken
+refreshToken
+expiresAt
 ```
 
-UI แยกสถานะ:
+`isExpired(now)` ทำให้ time logic test ได้
 
-### Network / Fresh Cache
+## `lib/features/auth/domain/auth_repository.dart`
 
-แสดง movie content ตามปกติ
+Contract:
 
-### Stale Cache
-
-แสดง content เดิมต่อ พร้อม banner ว่ากำลังใช้ cached data และมี Retry
-
-### Mock Data
-
-แสดง demo content พร้อม notice ชัดเจน
-
-### No Usable Data
-
-แสดง blocking error state พร้อม Retry
-
-Retry ใช้ force-refresh path ไม่ใช่เพียง rebuild widget แบบเดิม
-
-จุดนี้ดีกว่า silent fallback เพราะผู้ใช้รู้ความสดของข้อมูลโดยไม่เสีย content ที่ยังมีประโยชน์
-
-Home ยังรวม Watchlist preview จาก local state
-
-Watch Stats chart ปัจจุบันยังเป็น static demo data ไม่ได้ derive จาก watch history จริง
+```text
+restore
+login
+validSession
+logout
+```
 
 ---
 
-# 18. Search Error Handling
+# 18. Secure Auth Storage
 
-## ไฟล์: `lib/features/search/presentation/search_page.dart`
+## `lib/features/auth/data/auth_local_data_source.dart`
 
-Search page ใช้ local state สำหรับ:
+ใช้ `FlutterSecureStorage`
 
-```text
-selected genre
-movie results
-loading
-failure
-roulette result
-```
-
-Flow:
+Keys:
 
 ```text
-query ว่าง
-  → discoverByGenre
-
-query มีข้อความ
-  → search
+auth.userId
+auth.accessToken
+auth.refreshToken
+auth.expiresAt
 ```
 
-เมื่อ request fail:
+`read()` คืน null เมื่อ record ไม่ครบ เพื่อไม่สร้าง partial session
 
-- ถ้ามี fallback result สามารถแสดงรายการได้
-- ถ้าไม่มี usable result แสดง error card
-- มี Retry action
+`clear()` ลบ credential ทั้งกลุ่ม
 
-ยังมี `mounted` guard ก่อน `setState()` หลัง async operation
-
-สิ่งที่ยังไม่ได้ทำใน Phase 1:
-
-- debounce
-- Dio CancelToken
-- latest-request-wins
-- search pagination
+Token จึงไม่อยู่ใน Hive/SharedPreferences
 
 ---
 
-# 19. Responsive Layout ด้วย Screen Ratio
+# 19. Demo Auth API
 
-## ไฟล์: `lib/core/layout/responsive_layout.dart`
+## `lib/features/auth/data/auth_remote_data_source.dart`
 
-ตามข้อกำหนด Phase 1 การเลือก layout **ไม่ใช้ absolute width breakpoint** แต่ใช้:
-
-```text
-ratio = screenWidth / screenHeight
-```
-
-Classification:
+`DemoAuthRemoteDataSource` มี:
 
 ```text
-ratio < 0.62          tallPortrait
-0.62 <= ratio < 0.90 portrait
-0.90 <= ratio < 1.35 balanced
-ratio >= 1.35         wide
+login
+refresh
 ```
 
-Grid policy:
+Login validation:
 
 ```text
-tallPortrait → 2 columns
-portrait     → 3 columns
-balanced     → 4 columns
-wide         → 5 columns
+email ต้องมี @
+password อย่างน้อย 6 ตัวอักษร
 ```
 
-Adaptive properties:
+Session มีอายุ 15 นาที
 
-- grid columns
-- horizontal padding
-- card child aspect ratio
-- section spacing
-- stats grid
+Refresh token ที่ไม่ขึ้นต้นด้วย demo format จะ throw `RefreshTokenExpiredException`
 
-ใช้กับ:
-
-```text
-HomePage
-SearchPage
-WatchlistPage
-```
-
-ข้อดี:
-
-- การหมุน device เปลี่ยน layout ตาม available shape
-- phone/tablet ที่มี ratio ใกล้กันได้ composition เดียวกัน
-- wide landscape ได้ density มากขึ้น
-
-ข้อจำกัดที่ต้องเข้าใจ:
-
-- ratio อย่างเดียวไม่รับประกัน physical space เพียงพอ
-- หน้าจอเล็กและจอใหญ่มากที่ ratio เท่ากันจะได้ column count เท่ากัน
-- production adaptive layout มักใช้ทั้ง ratio, constraints, text scale และ minimum card extent
-
-โปรเจกต์ใช้ ratio ตาม requirement โดยตั้งใจ และมี test ยืนยันว่า layout ไม่ตัดสินใจจาก width เพียงค่าเดียว
+นี่เป็น deterministic fake เพื่อสาธิต client architecture ไม่ใช่ backend security
 
 ---
 
-# 20. Watchlist Domain และ Persistence
+# 20. Auth Repository and Concurrent Refresh
 
-## ไฟล์: `lib/features/watchlist/domain/watchlist_item.dart`
+## `lib/features/auth/data/auth_repository_impl.dart`
 
-`WatchlistItem` เก็บ:
-
-```text
-id
-movieId
-title
-posterPath
-backdropPath
-status
-personalRating
-addedAt
-watchedAt
-notes
-runtimeMinutes
-genre
-```
-
-Statuses:
+Memory state:
 
 ```text
-wantToWatch
-watched
-favorite
+_session
+_refreshInFlight
 ```
 
-`toMap()` และ `fromMap()` ทำให้ model เก็บใน Hive `Box<Map>` ได้โดยไม่ใช้ generated adapter
-
-ข้อดี:
-
-- setup ง่าย
-- schema อ่านได้ตรง
-- test serialization ง่าย
-
-ข้อเสีย:
-
-- compile-time type safety ต่ำกว่า typed adapter
-- migration ต้องดูแลเอง
-
-## ไฟล์: `lib/features/watchlist/data/watchlist_local_data_source.dart`
-
-Operations:
+`validSession()`:
 
 ```text
-getAll
-save
-delete
+load current session
+  ↓
+missing?
+  ├── yes → MissingSessionException
+  └── no
+       ↓
+expired?
+  ├── no → return current
+  └── yes
+       ↓
+_refreshInFlight exists?
+  ├── yes → await existing Future
+  └── no  → create refresh Future
 ```
 
-`getAll()` sort จาก `addedAt` ใหม่ไปเก่า
+ทุก concurrent caller จึง share refresh call เดียว
 
-## ไฟล์: `lib/features/watchlist/presentation/watchlist_controller.dart`
+หลัง refresh:
 
-Riverpod Notifier เป็น state owner
+- preserve userId
+- replace tokens/expiry
+- persist secure session
+- clear in-flight future
 
-```text
-build() → load initial Hive data
-save()  → persist → reload → update state
-delete()→ persist → reload → update state
-```
-
-UI ที่ watch provider จะ rebuild หลัง persistence สำเร็จ
+Refresh rejection ระหว่าง restore จะ logout และคืน null
 
 ---
 
-# 21. Watchlist Screen และ Derived Statistics
+# 21. AuthController and Login UI
 
-## ไฟล์: `lib/features/watchlist/presentation/watchlist_page.dart`
+## `lib/features/auth/presentation/auth_controller.dart`
 
-คำนวณ:
+เป็น `AsyncNotifier<AuthSession?>`
 
-```text
-Total Movies Watched
-Total Hours
-Average Personal Rating
-Favorite Genre
-```
-
-Total Hours:
+State:
 
 ```text
-sum(runtimeMinutes) / 60
+AsyncLoading
+AsyncData(null)
+AsyncData(session)
+AsyncError
 ```
 
-Average Rating ใช้เฉพาะ item ที่มี personal rating
+## `lib/features/auth/presentation/login_page.dart`
 
-Favorite Genre นับ frequency และเลือกค่ามากที่สุด
+มี email/password controllers และ dispose ครบ
 
-Responsive layout ใช้ ratio class สำหรับ:
+Login button disable ระหว่าง loading
 
-- stats columns
-- movie columns
-- card aspect ratio
-- horizontal padding
+Success → pop route
 
-ปัจจุบัน derived statistics อยู่ใน widget เหมาะกับ data volume เล็ก แต่ควรย้ายเป็น provider/domain service หาก business rules ซับซ้อนขึ้น
+Failure → localized error
+
+Default demo credential ถูกใส่เพื่อ reviewer ทดลอง flow ได้ทันที
 
 ---
 
-# 22. Movie Detail และ Watchlist Flow
+# 22. Watchlist
 
-## ไฟล์: `lib/features/movie_detail/presentation/movie_detail_page.dart`
-
-รับ `movieId` จาก router และ watch `movieDetailProvider`
-
-สถานะ:
+Watchlist flow:
 
 ```text
-loading → progress
-error   → localized error
-success → detail content
-```
-
-ข้อมูลที่แสดง:
-
-- backdrop
-- title
-- rating
-- release year
-- runtime
-- genres
-- rating chart
-- budget
-- revenue
-- vote count
-- original language
-- overview
-- cast
-- trailer
-- similar movies
-
-Add-to-Watchlist modal เก็บ:
-
-- status
-- personal rating
-- notes
-- watched date
-
-เมื่อ Save:
-
-```text
-MovieDetailPage
-    ↓
-สร้าง WatchlistItem
-    ↓
+MovieDetail
+  ↓
 WatchlistController.save()
-    ↓
-WatchlistLocalDataSource.save()
-    ↓
+  ↓
+WatchlistLocalDataSource
+  ↓
 Hive
-    ↓
+  ↓
 reload state
+  ↓
+Home/Watchlist rebuild
 ```
 
-Integration test ใช้ flow นี้เพื่อยืนยัน end-to-end behavior ระหว่าง UI, Riverpod และ Hive
+Statistics derive จาก watched items:
+
+- count
+- total runtime / 60
+- average personal rating
+- favorite genre frequency
 
 ---
 
-# 23. Profile และ Settings
+# 23. Profile and Localization
 
-## ไฟล์: `lib/features/profile/domain/user_preferences.dart`
+Profile preferences เก็บใน Hive
 
-เก็บ:
+รองรับ:
 
 ```text
-displayName
+display name
 email
-favoriteGenre
-languageCode
-notificationsEnabled
-autoplayTrailers
+favorite genre
+language
+notification preference
+autoplay preference
 ```
 
-มี default values, `copyWith`, `toMap()` และ `fromMap()`
-
-## ไฟล์: `lib/features/profile/data/user_preferences_local_data_source.dart`
-
-เก็บ preferences หนึ่ง record ใน Hive key `current`
+Runtime language flow:
 
 ```text
-user_preferences box
-    ↓
-current
-    ↓
-UserPreferences map
-```
-
-## ไฟล์: `lib/features/profile/presentation/profile_controller.dart`
-
-Controller รองรับ:
-
-```text
-updateProfile
-setLanguage
-setNotificationsEnabled
-setAutoplayTrailers
-```
-
-ทุก operation update state และ persist ลง Hive
-
-## ไฟล์: `lib/features/profile/presentation/profile_page.dart`
-
-UI มี:
-
-- profile card
-- edit dialog
-- language selector
-- notification switch
-- autoplay switch
-- calendar shortcut
-- about/version
-
-การเปลี่ยนภาษา:
-
-```text
-เลือก locale
-   ↓
+select locale
+  ↓
 context.setLocale()
-   ↓
-ProfileController.setLanguage()
-   ↓
-Hive persistence
+  ↓
+persist languageCode
+  ↓
+widget tree rebuilds
 ```
 
-Integration test ตรวจทั้ง profile update และ runtime locale change
-
-Notification/Autoplay ใน Phase 1 เป็น persisted preference เท่านั้น ยังไม่ได้เชื่อม native notification scheduler หรือ actual trailer autoplay behavior
+CSV validation test ตรวจ header, column count, blank value, duplicate key และ LF/CRLF
 
 ---
 
-# 24. Localization
+# 24. Ratio-Based Responsive Layout
 
-## ไฟล์: `assets/langs/langs.csv`
+## `lib/core/layout/responsive_layout.dart`
 
-CSV เป็น single source of truth:
+ใช้:
 
-```csv
-key,en,th
+```text
+ratio = width / height
 ```
 
-UI ใช้:
+Policy:
 
-```dart
-'key'.tr()
-```
+| Ratio | Class | Columns |
+|---:|---|---:|
+| `< 0.62` | Tall Portrait | 2 |
+| `0.62 – < 0.90` | Portrait | 3 |
+| `0.90 – < 1.35` | Balanced | 4 |
+| `>= 1.35` | Wide | 5 |
 
-Named arguments:
+Apply กับ Home, Search, Watchlist และ statistics grid
 
-```dart
-'welcome'.tr(namedArgs: {'name': displayName})
-```
-
-Phase 1 เพิ่มข้อความสำหรับ:
-
-- cache banner
-- offline state
-- retry
-- profile/settings
-
-## Test: `test/localization/localization_csv_test.dart`
-
-ตรวจ:
-
-- file exists
-- header ถูกต้อง
-- row มี 3 columns
-- ไม่มี blank value
-- key ไม่ซ้ำ
-- normalize LF/CRLF
-
-Test นี้ป้องกัน startup crash จาก malformed CSV
+Test ยืนยัน screen ต่างขนาดแต่ ratio เท่ากันได้ layout class เดียวกัน
 
 ---
 
-# 25. Unit Testing Strategy
+# 25. Testing Strategy
 
-## Model Tests
+## Unit
 
-ตรวจ JSON mapping และ normalization
+- JSON mapping
+- cache freshness/policy
+- typed failure mapping
+- 429 retry
+- Hive serialization
+- Profile controller
+- Auth restore/refresh
+- concurrent refresh deduplication
+- debounce/latest wins
+- responsive ratio
+- localization CSV
 
-```text
-test/features/movies/data/models/movie_model_test.dart
-```
+## Widget
 
-## Failure Tests
+- shared components
+- profile settings
+- stale/offline Home state
+- responsive Watchlist grid
 
-```text
-test/core/errors/app_failure_test.dart
-```
+## Integration
 
-ตรวจ Dio error → typed failure
+- profile edit + locale switch
+- detail → watchlist persistence
 
-## Ratio Policy Tests
+## Golden
 
-```text
-test/core/layout/responsive_layout_test.dart
-```
-
-ตรวจ:
-
-- ratio classifications
-- grid columns
-- same ratio / different size ให้ผลเดียวกัน
-- boundary values
-
-## Cache Data Source Tests
-
-```text
-test/features/movies/data/movie_cache_local_data_source_test.dart
-```
-
-ตรวจ:
-
-- serialization round-trip
-- timestamp
-- freshness
-- corrupt data fallback
-- clear cache
-
-## Cache Policy Tests
-
-```text
-test/features/movies/data/movie_cache_policy_test.dart
-```
-
-ตรวจ:
-
-- fresh cache ไม่เรียก remote
-- expired cache เรียก remote
-- network success เขียน cache
-- network fail ใช้ stale cache
-- ไม่มี stale cache ใช้ mock
-- force refresh bypass fresh cache
-
-## Controller Tests
-
-ตรวจ Watchlist และ Profile controller update/persistence
+- cinematic dark shared components
 
 ---
 
-# 26. Widget Tests
-
-Widget tests ครอบคลุม:
-
-- shared cards/posters
-- Profile page rendering
-- Home offline/stale banner
-- Retry action
-- Watchlist ratio-responsive grid
-
-Responsive widget test กำหนด `tester.view.physicalSize` แล้วตรวจจำนวน cell/layout behavior
-
-ควร reset:
-
-```dart
-tester.view.resetPhysicalSize();
-tester.view.resetDevicePixelRatio();
-```
-
-ใน teardown เพื่อไม่ให้ test ถัดไปได้รับ viewport เดิม
-
----
-
-# 27. Golden Tests
-
-## ไฟล์: `test/goldens/clay_components_golden_test.dart`
-
-Golden test ตรวจ visual regression ของ Cinematic Dark components
-
-Default suite skip golden ผ่าน compile-time flag:
-
-```dart
-const _runGoldens = bool.fromEnvironment('RUN_GOLDENS');
-```
-
-สร้าง/update baseline:
-
-```bash
-make golden-update
-```
-
-ตรวจ baseline:
-
-```bash
-make golden
-```
-
-Golden baseline ควร generate ใน environment ที่ทีมกำหนดร่วมกันเพื่อลด font/rendering differences
-
----
-
-# 28. Integration Tests
-
-## `integration_test/watchlist_flow_test.dart`
-
-Flow:
-
-```text
-Launch app
-→ Open Movie Detail
-→ Add to Watchlist
-→ Save
-→ Navigate to Watchlist
-→ Verify persisted movie/status
-```
-
-## `integration_test/profile_settings_flow_test.dart`
-
-Flow:
-
-```text
-Launch app
-→ Open Profile
-→ Edit display name/email/genre
-→ Save
-→ Change language to Thai
-→ Verify state and translated UI
-```
-
-Tests override dependencies/fake remote data เพื่อให้ deterministic และไม่ขึ้นกับ TMDB availability
-
-รัน:
-
-```bash
-flutter devices
-make integration DEVICE=<device-id>
-```
-
-Integration test ต้องใช้ emulator/simulator/device ไม่รวมใน host `flutter test` ปกติ
-
----
-
-# 29. Makefile
+# 26. Makefile and Coverage Gate
 
 Commands:
 
 ```bash
-make help
-make get
-make clean
 make format
-make format-check
-make analyze
-make test
-make test-unit
-make test-widget
-make golden
-make golden-update
+make check
+make coverage-check
 make integration DEVICE=<id>
-make coverage
-make check
-make ci
+make golden
 ```
 
-Formatter ครอบคลุม:
+Coverage default:
 
 ```text
-lib/
-test/
-integration_test/
+55%
 ```
 
-Workflow ก่อน commit:
-
-```bash
-make format
-make check
-```
-
-Full local validation:
-
-```bash
-make format
-make check
-make golden
-make integration DEVICE=<device-id>
-```
+CI fail เมื่อ line coverage ต่ำกว่า threshold
 
 ---
 
-# 30. GitHub Actions CI
+# 27. GitHub Actions
 
-## ไฟล์: `.github/workflows/flutter_ci.yml`
-
-Trigger:
+Pipeline:
 
 ```text
-push main
-pull_request main
-```
-
-Steps:
-
-```text
-Checkout
-→ Setup Flutter stable
-→ Create empty assets/.env when missing
-→ flutter pub get
+checkout
+→ Flutter setup
+→ create CI .env
+→ pub get
 → format check
-→ flutter analyze
-→ flutter test --coverage
-→ upload lcov artifact
+→ analyze
+→ tests with coverage
+→ coverage threshold
+→ upload lcov
 ```
 
-CI ไม่ใส่ real TMDB token และ test ไม่ควรพึ่ง external API
-
-สิ่งที่ CI ยังไม่ได้ทำ:
-
-- integration tests บน emulator
-- golden tests
-- coverage threshold
-- release build
-- dependency/security scan
+Integration tests ไม่รันบน generic Linux job เพราะต้องมี emulator/device configuration แยก
 
 ---
 
-# 31. End-to-End Flow: Trending Data
+# 28. Requirements and Review Process
+
+Documentation:
 
 ```text
-HomePage
-  ↓ ref.watch
-trendingResultProvider(language)
-  ↓
-MovieRepositoryImpl.getTrendingResult()
-  ↓
-MovieCacheLocalDataSource.read(cacheKey)
-  ↓
-Fresh cache?
-  ├── Yes → MovieLoadResult(freshCache)
-  └── No
-       ↓
-TmdbRemoteDataSource.trending()
-       ↓
-Dio + RateLimitInterceptor
-       ↓
-TMDB
-       ↓
-MovieModel.fromJson()
-       ↓
-cache.write()
-       ↓
-MovieLoadResult(network)
-       ↓
-Home UI
+PRODUCT_REQUIREMENTS.md
+USER_FLOWS.md
+ACCEPTANCE_CRITERIA.md
+PERFORMANCE_AND_DIAGNOSTICS.md
+BUILD_AND_RELEASE.md
+CODE_REVIEW_CHECKLIST.md
 ```
 
-เมื่อ network fail:
+PR template บังคับให้ระบุ:
 
-```text
-Exception
-  ↓
-AppFailureMapper
-  ↓
-Stale cache exists?
-  ├── Yes → stale data + failure + offline banner
-  └── No  → mock data + failure + demo notice
-```
+- requirement/AC
+- test evidence
+- network/error cases
+- responsive/localization
+- lifecycle/performance
+- release risk
 
 ---
 
-# 32. End-to-End Flow: Profile Persistence
+# 29. Known Gaps
 
-```text
-ProfilePage
-  ↓
-ProfileController.updateProfile()
-  ↓
-UserPreferences.copyWith()
-  ↓
-UserPreferencesLocalDataSource.save()
-  ↓
-Hive user_preferences box
-  ↓
-Riverpod state update
-  ↓
-ProfilePage rebuild
-```
+- Demo Auth ไม่ใช่ OAuth/OIDC production backend
+- Search UI ยังต้อง wire `DebouncedLatestTask` เต็มรูปแบบ
+- Pagination controller/infinite scroll ยังไม่เสร็จ
+- Connectivity stream ยังต้องเชื่อม targeted refresh UX เพิ่ม
+- Lifecycle observer ยังต้องผูกกับ YouTube controller
+- Crash reporter ยังเป็น local logging implementation
+- Native flavors/signing ยังต้อง configure ใน Android/iOS project
 
-เปลี่ยนภาษา:
-
-```text
-Language sheet
-  ↓
-context.setLocale(Locale)
-  ↓
-EasyLocalization rebuild
-  ↓
-ProfileController persists languageCode
-```
-
----
-
-# 33. End-to-End Flow: Watchlist
-
-```text
-MovieDetailPage
-  ↓
-WatchlistItem
-  ↓
-WatchlistController.save()
-  ↓
-WatchlistLocalDataSource.save()
-  ↓
-Hive watchlist_items
-  ↓
-Controller reloads getAll()
-  ↓
-Home and Watchlist rebuild
-```
-
----
-
-# 34. สิ่งที่ Phase 1 แสดงต่อผู้สัมภาษณ์ได้
-
-Phase 1 ใช้เป็นหลักฐานสำหรับ:
-
-- REST API integration
-- JSON mapping
-- Repository pattern
-- Riverpod dependency injection/state management
-- Hive local persistence
-- real cache policy
-- stale-data UX
-- typed error handling
-- timeout/rate-limit retry
-- navigation
-- runtime localization
-- ratio-based adaptive UI
-- unit/widget/golden/integration tests
-- CI workflow
-- technical documentation
-
----
-
-# 35. Known Limitations หลัง Phase 1
-
-1. ยังไม่มี user authentication และ refresh token
-2. ยังไม่มี Flutter Secure Storage
-3. Search ยังไม่มี debounce/cancellation/latest-request-wins
-4. ยังไม่มี connectivity stream
-5. ยังไม่มี pagination
-6. ยังไม่มี crash reporting/analytics
-7. ยังไม่มี app lifecycle handling ของ video
-8. Notification toggle ยังไม่ schedule native notification
-9. Autoplay preference ยังไม่ผูก YoutubePlayer behavior
-10. Watch Stats ยังเป็น static data
-11. ratio-only responsive policy มีข้อจำกัดบน device ต่างขนาดที่ ratio เท่ากัน
-12. CI ยังไม่รัน integration/golden/release build
-13. ยังไม่มี flavors/signing/release pipeline
-14. ยังไม่มี coverage threshold
-
----
-
-# 36. Reviewer Checklist
-
-ก่อน merge:
-
-```bash
-make format
-make check
-make golden
-flutter devices
-make integration DEVICE=<device-id>
-```
-
-ตรวจด้วยตนเอง:
-
-- ลบ/ปิด network แล้ว Home ใช้ stale cache
-- ไม่มี cache แล้วเห็น mock-data notice
-- Retry เรียก force refresh
-- เปลี่ยนภาษาแล้ว UI เปลี่ยนและจำค่าได้
-- เพิ่ม Watchlist แล้ว restart app ข้อมูลยังอยู่
-- หมุน portrait/landscape แล้ว grid เปลี่ยนตาม ratio
-- test และ CI ผ่าน
-
----
-
-# 37. สรุป Architecture Decision
-
-โปรเจกต์เลือก lightweight Clean Architecture เพราะต้องการรักษา boundary ที่สำคัญโดยไม่สร้าง class ซ้ำเกินขนาดระบบ
-
-Boundary ที่รักษาไว้:
-
-```text
-UI ไม่เรียก Dio โดยตรง
-UI ไม่อ่าน Hive โดยตรง
-Remote Data Source ไม่ตัดสิน cache policy
-Local Data Source ไม่ตัดสิน UI state
-Repository ไม่ render widget
-Domain entity ไม่ขึ้นกับ Flutter UI
-```
-
-Riverpod ทำหน้าที่สองส่วน:
-
-```text
-Dependency composition
-State exposure
-```
-
-Repository เป็น policy boundary สำหรับ:
-
-```text
-network
-cache freshness
-stale fallback
-mock fallback
-failure metadata
-```
-
-ผลลัพธ์คือ source สามารถทดสอบแยกชั้นและอธิบาย production concern ได้ชัดเจนกว่าการให้ screen เรียก API/Hive โดยตรง
+Known gaps ถูกบันทึกโดยตั้งใจเพื่อให้ reviewer แยกระหว่างสิ่งที่ implement แล้วกับ design direction ที่ยังไม่สมบูรณ์
