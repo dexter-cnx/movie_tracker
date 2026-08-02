@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:popcorn_movie_tracker/app.dart';
+import 'package:popcorn_movie_tracker/features/movies/data/movie_cache_local_data_source.dart';
 import 'package:popcorn_movie_tracker/features/profile/data/user_preferences_local_data_source.dart';
 import 'package:popcorn_movie_tracker/features/watchlist/data/watchlist_local_data_source.dart';
 
@@ -16,6 +17,7 @@ Future<void> main() async {
   await Future.wait([
     Hive.openBox<Map>(WatchlistLocalDataSource.boxName),
     Hive.openBox<Map>(UserPreferencesLocalDataSource.boxName),
+    Hive.openBox<Map>(MovieCacheLocalDataSource.boxName),
   ]);
 
   runApp(
