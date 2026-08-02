@@ -86,3 +86,7 @@ noEmail,No email added,ยังไม่ได้เพิ่มอีเมล
 more,More,เพิ่มเติม
 aboutApp,About Popcorn,เกี่ยวกับ Popcorn
 appVersion,Version {},เวอร์ชัน {}
+retry,Retry,ลองอีกครั้ง
+offlineData,Offline data,ข้อมูลออฟไลน์
+staleCacheNotice,Showing previously cached movies,กำลังแสดงข้อมูลภาพยนตร์ที่บันทึกไว้
+freshCacheNotice,Loaded from local cache,โหลดจากแคชในเครื่อง
