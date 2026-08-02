@@ -1,8 +1,13 @@
 import 'package:popcorn_movie_tracker/features/movies/domain/entities/movie.dart';
+import 'package:popcorn_movie_tracker/features/movies/domain/entities/movie_load_result.dart';
 
 abstract interface class MovieRepository {
   Future<List<Movie>> getPopular(String language);
   Future<List<Movie>> getTrending(String language);
+  Future<MovieLoadResult> getTrendingFeed(
+    String language, {
+    bool forceRefresh = false,
+  });
   Future<List<Movie>> getTopRated(String language);
   Future<List<Movie>> getUpcoming(String language);
   Future<List<Movie>> getNowPlaying(String language);
