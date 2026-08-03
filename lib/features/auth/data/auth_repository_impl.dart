@@ -33,7 +33,8 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<AuthSession> login({required String email, required String password}) async {
+  Future<AuthSession> login(
+      {required String email, required String password}) async {
     final session = await remote.login(email: email, password: password);
     _session = session;
     await local.write(session);

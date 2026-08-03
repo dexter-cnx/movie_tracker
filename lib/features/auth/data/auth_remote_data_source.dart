@@ -6,12 +6,14 @@ abstract interface class AuthRemoteDataSource {
 }
 
 class DemoAuthRemoteDataSource implements AuthRemoteDataSource {
-  DemoAuthRemoteDataSource({DateTime Function()? now}) : _now = now ?? DateTime.now;
+  DemoAuthRemoteDataSource({DateTime Function()? now})
+      : _now = now ?? DateTime.now;
 
   final DateTime Function() _now;
 
   @override
-  Future<AuthSession> login({required String email, required String password}) async {
+  Future<AuthSession> login(
+      {required String email, required String password}) async {
     await Future<void>.delayed(const Duration(milliseconds: 350));
     if (!email.contains('@') || password.length < 6) {
       throw const AuthCredentialsException();

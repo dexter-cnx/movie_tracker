@@ -106,8 +106,10 @@ class ProfilePage extends ConsumerWidget {
                   }
 
                   final expiresAt = session.expiresAt.toLocal();
-                  final materialLocalizations = MaterialLocalizations.of(context);
-                  final expiry = '${materialLocalizations.formatShortDate(expiresAt)} '
+                  final materialLocalizations =
+                      MaterialLocalizations.of(context);
+                  final expiry =
+                      '${materialLocalizations.formatShortDate(expiresAt)} '
                       '${materialLocalizations.formatTimeOfDay(TimeOfDay.fromDateTime(expiresAt))}';
 
                   return Column(

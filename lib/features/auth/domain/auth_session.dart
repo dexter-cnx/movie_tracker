@@ -24,6 +24,7 @@ class AuthSession {
         userId: map['userId'] ?? '',
         accessToken: map['accessToken'] ?? '',
         refreshToken: map['refreshToken'] ?? '',
-        expiresAt: DateTime.tryParse(map['expiresAt'] ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0),
+        expiresAt: DateTime.tryParse(map['expiresAt'] ?? '') ??
+            DateTime.fromMillisecondsSinceEpoch(0),
       );
 }

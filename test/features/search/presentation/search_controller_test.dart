@@ -66,7 +66,8 @@ void main() {
     expect(controller.state.hasMore, isTrue);
   });
 
-  test('loadMore appends next page and prevents duplicate page request', () async {
+  test('loadMore appends next page and prevents duplicate page request',
+      () async {
     when(() => repository.searchPage('dune', 'en-US', 1)).thenAnswer(
       (_) async => const PagedMovies(
         items: [movie1],

@@ -77,9 +77,8 @@ class WatchlistPage extends ConsumerWidget {
               physics: const NeverScrollableScrollPhysics(),
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: ratioClass == DeviceRatioClass.tallPortrait
-                  ? 1.55
-                  : 1.85,
+              childAspectRatio:
+                  ratioClass == DeviceRatioClass.tallPortrait ? 1.55 : 1.85,
               children: [
                 _stat(
                   context,
@@ -124,9 +123,8 @@ class WatchlistPage extends ConsumerWidget {
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: movieColumns,
-                  childAspectRatio: ratioClass == DeviceRatioClass.wide
-                      ? .74
-                      : .65,
+                  childAspectRatio:
+                      ratioClass == DeviceRatioClass.wide ? .74 : .65,
                   crossAxisSpacing: 14,
                   mainAxisSpacing: 14,
                 ),

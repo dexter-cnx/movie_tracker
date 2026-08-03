@@ -240,7 +240,8 @@ class _WatchStatsCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: AppColors.green.withValues(alpha: .12),
                   borderRadius: BorderRadius.circular(14),
@@ -273,9 +274,8 @@ class _WatchStatsCard extends StatelessWidget {
                         toY: [3, 5, 4, 7, 6, 8, 5][index].toDouble(),
                         width: 10,
                         borderRadius: BorderRadius.circular(4),
-                        color: index == 5
-                            ? AppColors.orange
-                            : AppColors.elevated,
+                        color:
+                            index == 5 ? AppColors.orange : AppColors.elevated,
                       ),
                     ],
                   ),

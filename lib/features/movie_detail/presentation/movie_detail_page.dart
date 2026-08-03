@@ -94,7 +94,8 @@ class MovieDetailPage extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             movie.overview.isEmpty ? '-' : movie.overview,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.55),
+            style:
+                Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.55),
           ),
           const SizedBox(height: 24),
           Text('cast'.tr(), style: Theme.of(context).textTheme.titleLarge),
@@ -315,7 +316,8 @@ class MovieDetailPage extends ConsumerWidget {
           Icon(
             icon,
             size: 15,
-            color: icon == Icons.star_rounded ? AppColors.orange : AppColors.text,
+            color:
+                icon == Icons.star_rounded ? AppColors.orange : AppColors.text,
           ),
           const SizedBox(width: 6),
           Text(
@@ -414,7 +416,8 @@ class MovieDetailPage extends ConsumerWidget {
                         return ChoiceChip(
                           label: Text(value.name.tr()),
                           selected: status == value,
-                          onSelected: (_) => setModalState(() => status = value),
+                          onSelected: (_) =>
+                              setModalState(() => status = value),
                           showCheckmark: false,
                           selectedColor: AppColors.button,
                           labelStyle: TextStyle(
@@ -437,8 +440,7 @@ class MovieDetailPage extends ConsumerWidget {
                       max: 10,
                       divisions: 9,
                       activeColor: AppColors.orange,
-                      onChanged: (value) =>
-                          setModalState(() => rating = value),
+                      onChanged: (value) => setModalState(() => rating = value),
                     ),
                     TextField(
                       controller: notesController,

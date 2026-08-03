@@ -37,7 +37,9 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     if (_initializedLanguage == language) return;
     _initializedLanguage = language;
     Future.microtask(
-      () => ref.read(movieSearchControllerProvider(language).notifier).initialize(),
+      () => ref
+          .read(movieSearchControllerProvider(language).notifier)
+          .initialize(),
     );
   }
 
@@ -67,7 +69,8 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     final language = apiLanguage(context.locale.languageCode);
     final genres = ref.watch(genresProvider(language));
     final state = ref.watch(movieSearchControllerProvider(language));
-    final controller = ref.read(movieSearchControllerProvider(language).notifier);
+    final controller =
+        ref.read(movieSearchControllerProvider(language).notifier);
 
     return SafeArea(
       child: RefreshIndicator(
@@ -191,8 +194,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                               : () {
                                   setState(() {
                                     roulette = state.movies[
-                                      Random().nextInt(state.movies.length)
-                                    ];
+                                        Random().nextInt(state.movies.length)];
                                   });
                                 },
                           style: FilledButton.styleFrom(

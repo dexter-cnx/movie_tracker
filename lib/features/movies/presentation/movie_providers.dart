@@ -28,7 +28,8 @@ final trendingFeedProvider = FutureProvider.family<MovieLoadResult, String>(
 );
 
 final trendingProvider = FutureProvider.family<List<Movie>, String>(
-  (ref, lang) async => (await ref.watch(trendingFeedProvider(lang).future)).movies,
+  (ref, lang) async =>
+      (await ref.watch(trendingFeedProvider(lang).future)).movies,
 );
 
 final movieDetailProvider = FutureProvider.family<Movie, MovieDetailArg>(

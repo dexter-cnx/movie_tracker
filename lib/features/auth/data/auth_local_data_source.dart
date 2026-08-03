@@ -25,7 +25,10 @@ class SecureAuthLocalDataSource implements AuthLocalDataSource {
     final refreshToken = values[_refreshTokenKey];
     final expiresAt = DateTime.tryParse(values[_expiresAtKey] ?? '');
 
-    if (userId == null || accessToken == null || refreshToken == null || expiresAt == null) {
+    if (userId == null ||
+        accessToken == null ||
+        refreshToken == null ||
+        expiresAt == null) {
       return null;
     }
 
@@ -43,7 +46,8 @@ class SecureAuthLocalDataSource implements AuthLocalDataSource {
       storage.write(key: _userIdKey, value: session.userId),
       storage.write(key: _accessTokenKey, value: session.accessToken),
       storage.write(key: _refreshTokenKey, value: session.refreshToken),
-      storage.write(key: _expiresAtKey, value: session.expiresAt.toIso8601String()),
+      storage.write(
+          key: _expiresAtKey, value: session.expiresAt.toIso8601String()),
     ]);
   }
 

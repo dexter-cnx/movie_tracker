@@ -92,7 +92,8 @@ class MovieCacheLocalDataSource {
         revenue: (map['revenue'] as num?)?.toInt(),
         voteCount: (map['voteCount'] as num?)?.toInt(),
         originalLanguage: map['originalLanguage'] as String?,
-        genres: (map['genres'] as List?)?.whereType<String>().toList() ?? const [],
+        genres:
+            (map['genres'] as List?)?.whereType<String>().toList() ?? const [],
         cast: (map['cast'] as List?)
                 ?.whereType<Map>()
                 .map(

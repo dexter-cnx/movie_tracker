@@ -4,6 +4,7 @@ import 'package:popcorn_movie_tracker/core/crash/crash_reporter.dart';
 import 'package:popcorn_movie_tracker/core/logging/app_logger.dart';
 
 class MockAppLogger extends Mock implements AppLogger {}
+
 class MockCrashReporter extends Mock implements CrashReporter {}
 
 void main() {

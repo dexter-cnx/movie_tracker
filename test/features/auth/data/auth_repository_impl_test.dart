@@ -6,6 +6,7 @@ import 'package:popcorn_movie_tracker/features/auth/data/auth_repository_impl.da
 import 'package:popcorn_movie_tracker/features/auth/domain/auth_session.dart';
 
 class MockAuthRemote extends Mock implements AuthRemoteDataSource {}
+
 class MockAuthLocal extends Mock implements AuthLocalDataSource {}
 
 void main() {
@@ -40,7 +41,8 @@ void main() {
     );
     when(() => local.read()).thenAnswer((_) async => session);
 
-    final repository = AuthRepositoryImpl(remote: remote, local: local, now: () => now);
+    final repository =
+        AuthRepositoryImpl(remote: remote, local: local, now: () => now);
 
     expect(await repository.restore(), same(session));
     verifyNever(() => remote.refresh(any()));
@@ -60,9 +62,11 @@ void main() {
       expiresAt: now.add(const Duration(minutes: 15)),
     );
     when(() => local.read()).thenAnswer((_) async => expired);
-    when(() => remote.refresh('demo-refresh-1')).thenAnswer((_) async => refreshed);
+    when(() => remote.refresh('demo-refresh-1'))
+        .thenAnswer((_) async => refreshed);
 
-    final repository = AuthRepositoryImpl(remote: remote, local: local, now: () => now);
+    final repository =
+        AuthRepositoryImpl(remote: remote, local: local, now: () => now);
     await repository.restore();
 
     final results = await Future.wait([
@@ -83,9 +87,11 @@ void main() {
       expiresAt: now.subtract(const Duration(seconds: 1)),
     );
     when(() => local.read()).thenAnswer((_) async => expired);
-    when(() => remote.refresh('invalid')).thenThrow(const RefreshTokenExpiredException());
+    when(() => remote.refresh('invalid'))
+        .thenThrow(const RefreshTokenExpiredException());
 
-    final repository = AuthRepositoryImpl(remote: remote, local: local, now: () => now);
+    final repository =
+        AuthRepositoryImpl(remote: remote, local: local, now: () => now);
 
     expect(await repository.restore(), isNull);
     verify(() => local.clear()).called(1);

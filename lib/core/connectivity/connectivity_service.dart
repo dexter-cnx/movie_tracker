@@ -14,15 +14,19 @@ class PluginConnectivityService implements ConnectivityService {
   final Connectivity connectivity;
 
   @override
-  Stream<NetworkStatus> get changes => connectivity.onConnectivityChanged.map(
+  Stream<NetworkStatus> get changes => connectivity.onConnectivityChanged
+      .map(
         (results) => _map(results),
-      ).distinct();
+      )
+      .distinct();
 
   @override
-  Future<NetworkStatus> current() async => _map(await connectivity.checkConnectivity());
+  Future<NetworkStatus> current() async =>
+      _map(await connectivity.checkConnectivity());
 
   NetworkStatus _map(List<ConnectivityResult> results) {
-    if (results.isEmpty || results.every((result) => result == ConnectivityResult.none)) {
+    if (results.isEmpty ||
+        results.every((result) => result == ConnectivityResult.none)) {
       return NetworkStatus.offline;
     }
     return NetworkStatus.online;

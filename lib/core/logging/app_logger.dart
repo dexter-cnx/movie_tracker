@@ -80,7 +80,8 @@ class DeveloperAppLogger implements AppLogger {
   }) {
     final safeContext = <String, Object?>{
       for (final entry in context.entries)
-        entry.key: _redactedKeys.contains(entry.key) ? '<redacted>' : entry.value,
+        entry.key:
+            _redactedKeys.contains(entry.key) ? '<redacted>' : entry.value,
     };
 
     developer.log(

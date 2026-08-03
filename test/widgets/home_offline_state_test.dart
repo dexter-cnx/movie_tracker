@@ -17,7 +17,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../helpers/test_localization.dart';
 
-class MockProfileSource extends Mock implements UserPreferencesLocalDataSource {}
+class MockProfileSource extends Mock
+    implements UserPreferencesLocalDataSource {}
 
 class MockWatchlistSource extends Mock implements WatchlistLocalDataSource {}
 
