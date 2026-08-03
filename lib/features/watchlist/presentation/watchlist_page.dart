@@ -10,6 +10,9 @@ import 'package:popcorn_movie_tracker/shared/widgets/clay_widgets.dart';
 class WatchlistPage extends ConsumerWidget {
   const WatchlistPage({super.key});
 
+  static const statsGridKey = Key('watchlist-stats-grid');
+  static const movieGridKey = Key('watchlist-movie-grid');
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.sizeOf(context);
@@ -68,6 +71,7 @@ class WatchlistPage extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
             GridView.count(
+              key: statsGridKey,
               crossAxisCount: statsColumns,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -115,6 +119,7 @@ class WatchlistPage extends ConsumerWidget {
               )
             else
               GridView.builder(
+                key: movieGridKey,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -156,6 +161,8 @@ class WatchlistPage extends ConsumerWidget {
                         const SizedBox(height: 4),
                         Text(
                           item.status.name.tr(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                         const SizedBox(height: 8),
@@ -183,27 +190,38 @@ class WatchlistPage extends ConsumerWidget {
     return ClayCard(
       padding: const EdgeInsets.all(15),
       radius: 22,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 7),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 20,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 7),
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 20,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
