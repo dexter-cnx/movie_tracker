@@ -7,6 +7,9 @@ import 'package:popcorn_movie_tracker/core/theme/app_theme.dart';
 
 class AppShell extends ConsumerWidget {
   const AppShell({super.key, required this.child});
+
+  static const double navigationContentHeight = 64;
+
   final Widget child;
 
   int _index(String location) {
@@ -71,44 +74,9 @@ class AppShell extends ConsumerWidget {
         ],
       ),
       extendBody: true,
-      bottomNavigationBar: Container(
-        height: 70,
-        decoration: const BoxDecoration(
-          color: Color(0xF20B0B0B),
-          border: Border(top: BorderSide(color: AppColors.divider, width: .7)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Row(
-            children: [
-              _item(context, 0, index, Icons.home_filled, 'home'.tr(), '/'),
-              _item(
-                context,
-                1,
-                index,
-                Icons.explore_rounded,
-                'explore'.tr(),
-                '/explore',
-              ),
-              _item(
-                context,
-                2,
-                index,
-                Icons.bookmark_rounded,
-                'watchlist'.tr(),
-                '/watchlist',
-              ),
-              _item(
-                context,
-                3,
-                index,
-                Icons.person_rounded,
-                'profile'.tr(),
-                '/profile',
-              ),
-            ],
-          ),
-        ),
+      bottomNavigationBar: _BottomNavigation(
+        selectedIndex: index,
+        onSelected: (route) => context.go(route),
       ),
       floatingActionButton: Container(
         width: 54,
@@ -137,36 +105,105 @@ class AppShell extends ConsumerWidget {
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
+}
+
+class _BottomNavigation extends StatelessWidget {
+  const _BottomNavigation({
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  final int selectedIndex;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xF20B0B0B),
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          border: Border(
+            top: BorderSide(color: AppColors.divider, width: .7),
+          ),
+        ),
+        child: SafeArea(
+          top: false,
+          minimum: const EdgeInsets.only(
+            bottom: 2,
+          ),
+          child: SizedBox(
+            height: AppShell.navigationContentHeight,
+            child: Row(
+              children: [
+                _item(0, Icons.home_filled, 'home'.tr(), '/'),
+                _item(
+                  1,
+                  Icons.explore_rounded,
+                  'explore'.tr(),
+                  '/explore',
+                ),
+                _item(
+                  2,
+                  Icons.bookmark_rounded,
+                  'watchlist'.tr(),
+                  '/watchlist',
+                ),
+                _item(
+                  3,
+                  Icons.person_rounded,
+                  'profile'.tr(),
+                  '/profile',
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _item(
-    BuildContext context,
-    int i,
-    int selected,
+    int index,
     IconData icon,
     String label,
     String route,
   ) {
+    final selected = index == selectedIndex;
+
     return Expanded(
-      child: InkWell(
-        onTap: () => context.go(route),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: i == selected ? AppColors.text : AppColors.muted,
-              size: 21,
+      child: Semantics(
+        selected: selected,
+        button: true,
+        label: label,
+        child: InkWell(
+          onTap: () => onSelected(route),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  color: selected ? AppColors.text : AppColors.muted,
+                  size: 22,
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    height: 1.1,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: selected ? AppColors.text : AppColors.muted,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                color: i == selected ? AppColors.text : AppColors.muted,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
