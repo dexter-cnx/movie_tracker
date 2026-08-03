@@ -4,13 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:popcorn_movie_tracker/core/theme/app_theme.dart';
+import 'package:popcorn_movie_tracker/features/movie_detail/presentation/lifecycle_trailer_player.dart';
 import 'package:popcorn_movie_tracker/features/movies/domain/entities/movie.dart';
 import 'package:popcorn_movie_tracker/features/movies/presentation/movie_providers.dart';
+import 'package:popcorn_movie_tracker/features/profile/presentation/profile_controller.dart';
 import 'package:popcorn_movie_tracker/features/watchlist/domain/watchlist_item.dart';
 import 'package:popcorn_movie_tracker/features/watchlist/presentation/watchlist_controller.dart';
 import 'package:popcorn_movie_tracker/shared/widgets/clay_widgets.dart';
 import 'package:uuid/uuid.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class MovieDetailPage extends ConsumerWidget {
   const MovieDetailPage({
@@ -26,11 +27,21 @@ class MovieDetailPage extends ConsumerWidget {
     final movieAsync = ref.watch(
       movieDetailProvider(MovieDetailArg(movieId, language)),
     );
+    final autoplayTrailers = ref.watch(
+      profileControllerProvider.select(
+        (preferences) => preferences.autoplayTrailers,
+      ),
+    );
 
     return Scaffold(
       body: SafeArea(
         child: movieAsync.when(
-          data: (movie) => _content(context, ref, movie),
+          data: (movie) => _content(
+            context,
+            ref,
+            movie,
+            autoplayTrailers: autoplayTrailers,
+          ),
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (_, __) => Center(child: Text('networkUnavailable'.tr())),
         ),
@@ -38,43 +49,18 @@ class MovieDetailPage extends ConsumerWidget {
     );
   }
 
-  Widget _content(BuildContext context, WidgetRef ref, Movie movie) {
+  Widget _content(
+    BuildContext context,
+    WidgetRef ref,
+    Movie movie, {
+    required bool autoplayTrailers,
+  }) {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 40),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(28),
-                child: Container(
-                  height: 250,
-                  width: double.infinity,
-                  color: AppColors.card,
-                  child: movie.backdropPath == null
-                      ? Center(
-                          child: Text(
-                            movie.title,
-                            style: Theme.of(context).textTheme.headlineMedium,
-                          ),
-                        )
-                      : Image.network(
-                          'https://image.tmdb.org/t/p/w500${movie.backdropPath}',
-                          fit: BoxFit.cover,
-                        ),
-                ),
-              ),
-              Positioned(
-                left: 12,
-                top: 12,
-                child: ClayIconButton(
-                  icon: Icons.arrow_back_rounded,
-                  onTap: () => context.pop(),
-                ),
-              ),
-            ],
-          ),
+          _backdrop(context, movie),
           const SizedBox(height: 20),
           Text(
             movie.title,
@@ -100,57 +86,11 @@ class MovieDetailPage extends ConsumerWidget {
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 12),
-          ClayCard(
-            child: SizedBox(
-              height: 150,
-              child: BarChart(
-                BarChartData(
-                  gridData: const FlGridData(show: false),
-                  titlesData: const FlTitlesData(show: false),
-                  borderData: FlBorderData(show: false),
-                  barGroups: List.generate(10, (index) {
-                    final score = index + 1;
-                    final active = score <= movie.voteAverage;
-                    return BarChartGroupData(
-                      x: score,
-                      barRods: [
-                        BarChartRodData(
-                          toY: (active ? score + 1 : 4).toDouble(),
-                          width: 13,
-                          color: active ? AppColors.orange : AppColors.elevated,
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                      ],
-                    );
-                  }),
-                ),
-              ),
-            ),
-          ),
+          _ratingChart(movie),
           const SizedBox(height: 22),
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 1.7,
-            children: [
-              _stat(context, 'budget'.tr(), _money(movie.budget)),
-              _stat(context, 'revenue'.tr(), _money(movie.revenue)),
-              _stat(context, 'voteCount'.tr(), '${movie.voteCount ?? 0}'),
-              _stat(
-                context,
-                'originalLanguage'.tr(),
-                (movie.originalLanguage ?? '-').toUpperCase(),
-              ),
-            ],
-          ),
+          _statistics(context, movie),
           const SizedBox(height: 24),
-          Text(
-            'overview'.tr(),
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          Text('overview'.tr(), style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           Text(
             movie.overview.isEmpty ? '-' : movie.overview,
@@ -158,64 +98,19 @@ class MovieDetailPage extends ConsumerWidget {
                 Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.55),
           ),
           const SizedBox(height: 24),
-          Text(
-            'cast'.tr(),
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          Text('cast'.tr(), style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 12),
-          SizedBox(
-            height: 92,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: movie.cast.isEmpty ? 4 : movie.cast.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
-              itemBuilder: (_, index) {
-                final name = movie.cast.isEmpty
-                    ? 'Cast ${index + 1}'
-                    : movie.cast[index].name;
-                return SizedBox(
-                  width: 72,
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 58,
-                        height: 58,
-                        decoration: const BoxDecoration(
-                          color: AppColors.cardAlt,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.person_rounded),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
+          _cast(movie),
           if (movie.trailerKey != null) ...[
             const SizedBox(height: 24),
-            Text(
-              'trailer'.tr(),
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            Text('trailer'.tr(), style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 12),
             ClipRRect(
               borderRadius: BorderRadius.circular(24),
-              child: YoutubePlayer(
-                controller: YoutubePlayerController(
-                  initialVideoId: movie.trailerKey!,
-                  flags: const YoutubePlayerFlags(autoPlay: false),
-                ),
+              child: LifecycleTrailerPlayer(
+                key: ValueKey(movie.trailerKey),
+                videoId: movie.trailerKey!,
+                autoPlay: autoplayTrailers,
               ),
             ),
           ],
@@ -252,11 +147,14 @@ class MovieDetailPage extends ConsumerWidget {
                 separatorBuilder: (_, __) => const SizedBox(width: 12),
                 itemBuilder: (_, index) {
                   final similar = movie.similar[index];
-                  return Poster(
-                    path: similar.posterPath,
-                    title: similar.title,
-                    width: 120,
-                    height: 180,
+                  return GestureDetector(
+                    onTap: () => context.push('/movie/${similar.id}'),
+                    child: Poster(
+                      path: similar.posterPath,
+                      title: similar.title,
+                      width: 120,
+                      height: 180,
+                    ),
                   );
                 },
               ),
@@ -267,19 +165,150 @@ class MovieDetailPage extends ConsumerWidget {
     );
   }
 
+  Widget _backdrop(BuildContext context, Movie movie) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: Container(
+            height: 250,
+            width: double.infinity,
+            color: AppColors.card,
+            child: movie.backdropPath == null
+                ? Center(
+                    child: Text(
+                      movie.title,
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                  )
+                : Image.network(
+                    'https://image.tmdb.org/t/p/w500${movie.backdropPath}',
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Center(
+                      child: Text(
+                        movie.title,
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                    ),
+                  ),
+          ),
+        ),
+        Positioned(
+          left: 12,
+          top: 12,
+          child: ClayIconButton(
+            icon: Icons.arrow_back_rounded,
+            onTap: () => context.pop(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _ratingChart(Movie movie) {
+    return ClayCard(
+      child: SizedBox(
+        height: 150,
+        child: BarChart(
+          BarChartData(
+            gridData: const FlGridData(show: false),
+            titlesData: const FlTitlesData(show: false),
+            borderData: FlBorderData(show: false),
+            barGroups: List.generate(10, (index) {
+              final score = index + 1;
+              final active = score <= movie.voteAverage;
+              return BarChartGroupData(
+                x: score,
+                barRods: [
+                  BarChartRodData(
+                    toY: (active ? score + 1 : 4).toDouble(),
+                    width: 13,
+                    color: active ? AppColors.orange : AppColors.elevated,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                ],
+              );
+            }),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _statistics(BuildContext context, Movie movie) {
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: 1.7,
+      children: [
+        _stat(context, 'budget'.tr(), _money(movie.budget)),
+        _stat(context, 'revenue'.tr(), _money(movie.revenue)),
+        _stat(context, 'voteCount'.tr(), '${movie.voteCount ?? 0}'),
+        _stat(
+          context,
+          'originalLanguage'.tr(),
+          (movie.originalLanguage ?? '-').toUpperCase(),
+        ),
+      ],
+    );
+  }
+
+  Widget _cast(Movie movie) {
+    return SizedBox(
+      height: 92,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: movie.cast.isEmpty ? 4 : movie.cast.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (_, index) {
+          final member = movie.cast.isEmpty ? null : movie.cast[index];
+          final name = member?.name ?? 'Cast ${index + 1}';
+          return SizedBox(
+            width: 72,
+            child: Column(
+              children: [
+                ClipOval(
+                  child: Container(
+                    width: 58,
+                    height: 58,
+                    color: AppColors.cardAlt,
+                    child: member?.profilePath == null
+                        ? const Icon(Icons.person_rounded)
+                        : Image.network(
+                            'https://image.tmdb.org/t/p/w185${member!.profilePath}',
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                                const Icon(Icons.person_rounded),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _chip(IconData icon, String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0D000000),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -293,10 +322,7 @@ class MovieDetailPage extends ConsumerWidget {
           const SizedBox(width: 6),
           Text(
             text,
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 12,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
           ),
         ],
       ),
@@ -317,10 +343,7 @@ class MovieDetailPage extends ConsumerWidget {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 16,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
           ),
         ],
       ),
@@ -393,9 +416,8 @@ class MovieDetailPage extends ConsumerWidget {
                         return ChoiceChip(
                           label: Text(value.name.tr()),
                           selected: status == value,
-                          onSelected: (_) {
-                            setModalState(() => status = value);
-                          },
+                          onSelected: (_) =>
+                              setModalState(() => status = value),
                           showCheckmark: false,
                           selectedColor: AppColors.button,
                           labelStyle: TextStyle(
@@ -418,9 +440,7 @@ class MovieDetailPage extends ConsumerWidget {
                       max: 10,
                       divisions: 9,
                       activeColor: AppColors.orange,
-                      onChanged: (value) {
-                        setModalState(() => rating = value);
-                      },
+                      onChanged: (value) => setModalState(() => rating = value),
                     ),
                     TextField(
                       controller: notesController,

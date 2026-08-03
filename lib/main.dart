@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:easy_localization_loader/easy_localization_loader.dart';
 import 'package:flutter/material.dart';
@@ -5,14 +7,51 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:popcorn_movie_tracker/app.dart';
+import 'package:popcorn_movie_tracker/core/crash/crash_reporter.dart';
+import 'package:popcorn_movie_tracker/core/logging/app_logger.dart';
+import 'package:popcorn_movie_tracker/features/movies/data/movie_cache_local_data_source.dart';
+import 'package:popcorn_movie_tracker/features/profile/data/user_preferences_local_data_source.dart';
 import 'package:popcorn_movie_tracker/features/watchlist/data/watchlist_local_data_source.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  const logger = DeveloperAppLogger();
+  const crashService = CrashService(LoggingCrashReporter(logger));
+  await crashService.initialize();
+
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    crashService.recordFlutterError(
+      FlutterErrorDetailsAdapter(
+        exception: details.exception,
+        stackTrace: details.stack ?? StackTrace.current,
+        reason: details.context?.toDescription(),
+      ),
+    );
+  };
+
+  PlatformDispatcher.instance.onError = (error, stackTrace) {
+    crashService.recordPlatformError(error, stackTrace);
+    return true;
+  };
+
   await EasyLocalization.ensureInitialized();
   await dotenv.load(fileName: 'assets/.env');
   await Hive.initFlutter();
-  await Hive.openBox<Map>(WatchlistLocalDataSource.boxName);
+  await Future.wait([
+    Hive.openBox<Map>(WatchlistLocalDataSource.boxName),
+    Hive.openBox<Map>(UserPreferencesLocalDataSource.boxName),
+    Hive.openBox<Map>(MovieCacheLocalDataSource.boxName),
+  ]);
+
+  await crashService.breadcrumb(
+    'Application bootstrap completed',
+    context: {
+      'locales': 'en,th',
+      'storage': 'hive',
+    },
+  );
 
   runApp(
     ProviderScope(

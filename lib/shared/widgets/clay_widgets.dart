@@ -17,21 +17,32 @@ class ClayCard extends StatelessWidget {
   final Color? color;
 
   @override
-  Widget build(BuildContext context) => Container(
-        padding: padding,
-        decoration: BoxDecoration(
-          color: color ?? AppColors.card,
-          borderRadius: BorderRadius.circular(radius),
-          border: Border.all(color: Colors.white.withValues(alpha: .035)),
-          boxShadow: const [
-            BoxShadow(
-                color: Color(0x66000000),
-                blurRadius: 22,
-                offset: Offset(0, 10)),
-          ],
+  Widget build(BuildContext context) {
+    final borderRadius = BorderRadius.circular(radius);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: borderRadius,
+        border: Border.all(color: Colors.white.withValues(alpha: .035)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x66000000),
+            blurRadius: 22,
+            offset: Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Material(
+        color: color ?? AppColors.card,
+        borderRadius: borderRadius,
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: padding,
+          child: child,
         ),
-        child: child,
-      );
+      ),
+    );
+  }
 }
 
 class ClayIconButton extends StatelessWidget {
@@ -40,18 +51,21 @@ class ClayIconButton extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => InkWell(
-        borderRadius: BorderRadius.circular(22),
-        onTap: onTap,
-        child: Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: AppColors.cardAlt,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white.withValues(alpha: .05)),
+  Widget build(BuildContext context) => Material(
+        color: AppColors.cardAlt,
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withValues(alpha: .05)),
+            ),
+            child: Icon(icon, color: AppColors.text, size: 19),
           ),
-          child: Icon(icon, color: AppColors.text, size: 19),
         ),
       );
 }
@@ -78,7 +92,10 @@ class Poster extends StatelessWidget {
         borderRadius: BorderRadius.circular(radius),
         boxShadow: const [
           BoxShadow(
-              color: Color(0x77000000), blurRadius: 18, offset: Offset(0, 8))
+            color: Color(0x77000000),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
         ],
       ),
       child: ClipRRect(
@@ -95,7 +112,9 @@ class Poster extends StatelessWidget {
                       title ?? '🎬',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                          fontWeight: FontWeight.w900, color: AppColors.text),
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.text,
+                      ),
                     ),
                   ),
                 )
@@ -103,8 +122,11 @@ class Poster extends StatelessWidget {
                   imageUrl: url,
                   fit: BoxFit.cover,
                   errorWidget: (_, __, ___) => const Center(
-                      child: Icon(Icons.movie_rounded,
-                          color: AppColors.secondary)),
+                    child: Icon(
+                      Icons.movie_rounded,
+                      color: AppColors.secondary,
+                    ),
+                  ),
                 ),
         ),
       ),

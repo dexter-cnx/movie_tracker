@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:popcorn_movie_tracker/core/layout/responsive_layout.dart';
 import 'package:popcorn_movie_tracker/core/theme/app_theme.dart';
 import 'package:popcorn_movie_tracker/features/watchlist/domain/watchlist_item.dart';
 import 'package:popcorn_movie_tracker/features/watchlist/presentation/watchlist_controller.dart';
@@ -9,8 +10,17 @@ import 'package:popcorn_movie_tracker/shared/widgets/clay_widgets.dart';
 class WatchlistPage extends ConsumerWidget {
   const WatchlistPage({super.key});
 
+  static const statsGridKey = Key('watchlist-stats-grid');
+  static const movieGridKey = Key('watchlist-movie-grid');
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final size = MediaQuery.sizeOf(context);
+    final ratioClass = ResponsiveLayout.classOf(size);
+    final movieColumns = ResponsiveLayout.gridColumns(size);
+    final statsColumns = movieColumns.clamp(2, 4).toInt();
+    final horizontalPadding = ResponsiveLayout.horizontalPadding(size);
+
     final items = ref.watch(watchlistControllerProvider);
     final watched =
         items.where((item) => item.status == WatchStatus.watched).toList();
@@ -46,7 +56,12 @@ class WatchlistPage extends ConsumerWidget {
 
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+        padding: EdgeInsets.fromLTRB(
+          horizontalPadding,
+          20,
+          horizontalPadding,
+          120,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -56,12 +71,14 @@ class WatchlistPage extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
             GridView.count(
-              crossAxisCount: 2,
+              key: statsGridKey,
+              crossAxisCount: statsColumns,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: 1.55,
+              childAspectRatio:
+                  ratioClass == DeviceRatioClass.tallPortrait ? 1.55 : 1.85,
               children: [
                 _stat(
                   context,
@@ -101,11 +118,13 @@ class WatchlistPage extends ConsumerWidget {
               )
             else
               GridView.builder(
+                key: movieGridKey,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: .65,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: movieColumns,
+                  childAspectRatio:
+                      ratioClass == DeviceRatioClass.wide ? .74 : .65,
                   crossAxisSpacing: 14,
                   mainAxisSpacing: 14,
                 ),
@@ -140,6 +159,8 @@ class WatchlistPage extends ConsumerWidget {
                         const SizedBox(height: 4),
                         Text(
                           item.status.name.tr(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                         const SizedBox(height: 8),
@@ -167,27 +188,38 @@ class WatchlistPage extends ConsumerWidget {
     return ClayCard(
       padding: const EdgeInsets.all(15),
       radius: 22,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 7),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 20,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 7),
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 20,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

@@ -71,3 +71,35 @@ noDate,No date selected,ยังไม่ได้เลือกวันท�
 chooseDate,Choose date,เลือกวันที่
 movie,Movie,หนัง
 november2026,November 2026,พฤศจิกายน 2026
+settings,Settings,การตั้งค่า
+language,Language,ภาษา
+english,English,ภาษาอังกฤษ
+thai,Thai,ภาษาไทย
+notifications,Notifications,การแจ้งเตือน
+notificationsDescription,Release reminders and watchlist updates,แจ้งเตือนวันฉายและการอัปเดตรายการ
+autoplayTrailers,Autoplay trailers,เล่นตัวอย่างอัตโนมัติ
+autoplayTrailersDescription,Play trailers automatically on movie details,เล่นตัวอย่างอัตโนมัติในหน้ารายละเอียด
+editProfile,Edit profile,แก้ไขโปรไฟล์
+displayName,Display name,ชื่อที่แสดง
+email,Email,อีเมล
+noEmail,No email added,ยังไม่ได้เพิ่มอีเมล
+more,More,เพิ่มเติม
+aboutApp,About Popcorn,เกี่ยวกับ Popcorn
+appVersion,Version {},เวอร์ชัน {}
+retry,Retry,ลองอีกครั้ง
+offlineData,Offline data,ข้อมูลออฟไลน์
+staleCacheNotice,Showing previously cached movies,กำลังแสดงข้อมูลภาพยนตร์ที่บันทึกไว้
+freshCacheNotice,Loaded from local cache,โหลดจากแคชในเครื่อง
+signIn,Sign in,เข้าสู่ระบบ
+signOut,Sign out,ออกจากระบบ
+password,Password,รหัสผ่าน
+demoAuthentication,Demo authentication,ระบบเข้าสู่ระบบตัวอย่าง
+demoAuthenticationDescription,Uses secure storage and synchronized token refresh without requiring a real backend.,ใช้ Secure Storage และ Token Refresh แบบป้องกันการเรียกซ้ำโดยไม่ต้องมี Backend จริง
+invalidCredentials,Enter a valid email and a password of at least 6 characters.,กรอกอีเมลให้ถูกต้องและรหัสผ่านอย่างน้อย 6 ตัวอักษร
+authenticatedAs,Signed in as {},เข้าสู่ระบบเป็น {}
+networkOnline,Back online,กลับมาออนไลน์แล้ว
+networkOffline,No network connection,ไม่มีการเชื่อมต่อเครือข่าย
+account,Account,บัญชี
+sessionUnavailable,Session unavailable,ไม่สามารถใช้งานเซสชันได้
+signInAgain,Sign in again to continue,กรุณาเข้าสู่ระบบอีกครั้งเพื่อดำเนินการต่อ
+sessionExpires,Session expires {},เซสชันหมดอายุ {}
