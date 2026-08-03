@@ -1,11 +1,12 @@
 import 'dart:ui';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
 
 /// Deterministic in-memory translations for widget tests.
 ///
-/// Widget tests should verify UI behavior rather than depend on the CSV asset
-/// loading channel. The production CSV itself is validated separately by
+/// Widget tests verify UI behavior without depending on the production CSV
+/// loader. The production CSV is validated separately by
 /// `test/localization/localization_csv_test.dart`.
 class TestLocalizationLoader extends AssetLoader {
   const TestLocalizationLoader();
@@ -63,4 +64,31 @@ class TestLocalizationLoader extends AssetLoader {
       locale.languageCode == 'th' ? _th : _en,
     );
   }
+}
+
+/// Builds a MaterialApp that actually installs EasyLocalization delegates.
+///
+/// Merely placing a MaterialApp below EasyLocalization is not sufficient in
+/// widget tests: the app must request the localization delegates so the asset
+/// loader is executed and `.tr()` can resolve values.
+Widget testLocalizedApp({required Widget home}) {
+  return EasyLocalization(
+    supportedLocales: const [Locale('en'), Locale('th')],
+    path: 'unused-in-widget-tests',
+    fallbackLocale: const Locale('en'),
+    startLocale: const Locale('en'),
+    saveLocale: false,
+    useOnlyLangCode: true,
+    assetLoader: const TestLocalizationLoader(),
+    child: Builder(
+      builder: (context) {
+        return MaterialApp(
+          locale: context.locale,
+          supportedLocales: context.supportedLocales,
+          localizationsDelegates: context.localizationDelegates,
+          home: Scaffold(body: home),
+        );
+      },
+    ),
+  );
 }
