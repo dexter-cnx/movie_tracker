@@ -1,5 +1,4 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -60,14 +59,7 @@ void main() {
             (_) async => const AppInfo(version: '1.1.0', buildNumber: '2'),
           ),
         ],
-        child: EasyLocalization(
-          supportedLocales: const [Locale('en'), Locale('th')],
-          path: 'unused-in-widget-tests',
-          fallbackLocale: const Locale('en'),
-          startLocale: const Locale('en'),
-          assetLoader: const TestLocalizationLoader(),
-          child: const MaterialApp(home: Scaffold(body: ProfilePage())),
-        ),
+        child: testLocalizedApp(home: const ProfilePage()),
       ),
     );
     await tester.pumpAndSettle();
