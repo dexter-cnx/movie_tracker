@@ -120,7 +120,7 @@ class AppImage extends StatelessWidget {
       return null;
     }
 
-    return (logicalSize * dpr).round().clamp(1, 4096);
+    return (logicalSize * dpr).round().clamp(1, 4096).toInt();
   }
 
   Widget _buildPlaceholder() {
@@ -157,6 +157,6 @@ class AppImage extends StatelessWidget {
 
   double get _errorIconSize {
     final availableSize = width ?? height ?? 40;
-    return (availableSize * 0.3).clamp(20, 48);
+    return (availableSize * 0.3).clamp(20, 48).toDouble();
   }
 }
