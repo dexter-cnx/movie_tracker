@@ -20,7 +20,7 @@ void main() {
 
     final result = source.load();
 
-    expect(result.displayName, 'Alex');
+    expect(result.displayName, 'Dexter');
     expect(result.languageCode, 'en');
   });
 
