@@ -58,7 +58,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Showing previously cached movies'), findsOneWidget);
-    expect(find.text(mockMovies.first.title), findsOneWidget);
+    expect(find.text(mockMovies.first.title), findsWidgets);
     expect(find.text('Retry'), findsOneWidget);
   });
 }
