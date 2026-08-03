@@ -1,5 +1,4 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:easy_localization_loader/easy_localization_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +8,8 @@ import 'package:popcorn_movie_tracker/features/watchlist/domain/watchlist_item.d
 import 'package:popcorn_movie_tracker/features/watchlist/presentation/watchlist_controller.dart';
 import 'package:popcorn_movie_tracker/features/watchlist/presentation/watchlist_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../helpers/test_localization.dart';
 
 class MockWatchlistSource extends Mock implements WatchlistLocalDataSource {}
 
@@ -34,7 +35,8 @@ void main() {
     ]);
 
     Future<void> pumpAt(Size size) async {
-      await tester.binding.setSurfaceSize(size);
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = size;
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
@@ -42,10 +44,10 @@ void main() {
           ],
           child: EasyLocalization(
             supportedLocales: const [Locale('en'), Locale('th')],
-            path: 'assets/langs/langs.csv',
+            path: 'unused-in-widget-tests',
             fallbackLocale: const Locale('en'),
             startLocale: const Locale('en'),
-            assetLoader: CsvAssetLoader(),
+            assetLoader: const TestLocalizationLoader(),
             child: const MaterialApp(home: Scaffold(body: WatchlistPage())),
           ),
         ),
@@ -53,16 +55,23 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
 
     await pumpAt(const Size(390, 844));
-    var movieGrid = tester.widget<GridView>(find.byType(GridView).last);
+    var movieGrid = tester.widget<GridView>(
+      find.byKey(WatchlistPage.movieGridKey),
+    );
     var delegate =
         movieGrid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
     expect(delegate.crossAxisCount, 2);
 
     await pumpAt(const Size(1600, 900));
-    movieGrid = tester.widget<GridView>(find.byType(GridView).last);
+    movieGrid = tester.widget<GridView>(
+      find.byKey(WatchlistPage.movieGridKey),
+    );
     delegate =
         movieGrid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
     expect(delegate.crossAxisCount, 5);
