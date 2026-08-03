@@ -1,6 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:popcorn_movie_tracker/core/theme/app_theme.dart';
+import 'package:popcorn_movie_tracker/shared/widgets/app_image.dart';
 
 class ClayCard extends StatelessWidget {
   const ClayCard({
@@ -78,15 +78,37 @@ class Poster extends StatelessWidget {
     this.height = 170,
     this.radius = 18,
     this.title,
+    this.heroTag,
   });
 
   final String? path;
   final double width, height, radius;
   final String? title;
+  final Object? heroTag;
 
   @override
   Widget build(BuildContext context) {
-    final url = path == null ? null : 'https://image.tmdb.org/t/p/w500$path';
+    final normalizedPath = path?.trim();
+    final url = normalizedPath == null || normalizedPath.isEmpty
+        ? null
+        : 'https://image.tmdb.org/t/p/w500$normalizedPath';
+
+    final fallback = Center(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Text(
+          title ?? '🎬',
+          textAlign: TextAlign.center,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontWeight: FontWeight.w900,
+            color: AppColors.text,
+          ),
+        ),
+      ),
+    );
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radius),
@@ -105,28 +127,14 @@ class Poster extends StatelessWidget {
           height: height,
           color: AppColors.cardAlt,
           child: url == null
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Text(
-                      title ?? '🎬',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.text,
-                      ),
-                    ),
-                  ),
-                )
-              : CachedNetworkImage(
-                  imageUrl: url,
+              ? fallback
+              : AppImage.network(
+                  url,
+                  width: width,
+                  height: height,
                   fit: BoxFit.cover,
-                  errorWidget: (_, __, ___) => const Center(
-                    child: Icon(
-                      Icons.movie_rounded,
-                      color: AppColors.secondary,
-                    ),
-                  ),
+                  heroTag: heroTag,
+                  errorWidget: fallback,
                 ),
         ),
       ),
