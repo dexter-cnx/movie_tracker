@@ -42,14 +42,7 @@ void main() {
           overrides: [
             watchlistDataSourceProvider.overrideWithValue(source),
           ],
-          child: EasyLocalization(
-            supportedLocales: const [Locale('en'), Locale('th')],
-            path: 'unused-in-widget-tests',
-            fallbackLocale: const Locale('en'),
-            startLocale: const Locale('en'),
-            assetLoader: const TestLocalizationLoader(),
-            child: const MaterialApp(home: Scaffold(body: WatchlistPage())),
-          ),
+          child: testLocalizedApp(home: const WatchlistPage()),
         ),
       );
       await tester.pumpAndSettle();
