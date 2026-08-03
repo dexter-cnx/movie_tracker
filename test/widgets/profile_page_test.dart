@@ -1,5 +1,4 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:easy_localization_loader/easy_localization_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,6 +12,8 @@ import 'package:popcorn_movie_tracker/features/profile/domain/user_preferences.d
 import 'package:popcorn_movie_tracker/features/profile/presentation/profile_controller.dart';
 import 'package:popcorn_movie_tracker/features/profile/presentation/profile_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../helpers/test_localization.dart';
 
 class MockPreferencesDataSource extends Mock
     implements UserPreferencesLocalDataSource {}
@@ -61,10 +62,10 @@ void main() {
         ],
         child: EasyLocalization(
           supportedLocales: const [Locale('en'), Locale('th')],
-          path: 'assets/langs/langs.csv',
+          path: 'unused-in-widget-tests',
           fallbackLocale: const Locale('en'),
           startLocale: const Locale('en'),
-          assetLoader: CsvAssetLoader(),
+          assetLoader: const TestLocalizationLoader(),
           child: const MaterialApp(home: Scaffold(body: ProfilePage())),
         ),
       ),
