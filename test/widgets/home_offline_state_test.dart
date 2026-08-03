@@ -52,19 +52,11 @@ void main() {
             ),
           ),
         ],
-        child: EasyLocalization(
-          supportedLocales: const [Locale('en'), Locale('th')],
-          path: 'unused-in-widget-tests',
-          fallbackLocale: const Locale('en'),
-          startLocale: const Locale('en'),
-          assetLoader: const TestLocalizationLoader(),
-          child: const MaterialApp(home: Scaffold(body: HomePage())),
-        ),
+        child: testLocalizedApp(home: const HomePage()),
       ),
     );
 
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
 
     expect(find.text('Showing previously cached movies'), findsOneWidget);
     expect(find.text(mockMovies.first.title), findsOneWidget);
