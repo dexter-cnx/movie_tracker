@@ -1,6 +1,6 @@
 class UserPreferences {
   const UserPreferences({
-    this.displayName = 'Alex',
+    this.displayName = 'Dexter',
     this.email = '',
     this.favoriteGenre = '',
     this.languageCode = 'en',
@@ -46,7 +46,7 @@ class UserPreferences {
     return UserPreferences(
       displayName: (map['displayName'] as String?)?.trim().isNotEmpty == true
           ? map['displayName'] as String
-          : 'Alex',
+          : 'Dexter',
       email: map['email'] as String? ?? '',
       favoriteGenre: map['favoriteGenre'] as String? ?? '',
       languageCode: map['languageCode'] == 'th' ? 'th' : 'en',
