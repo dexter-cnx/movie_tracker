@@ -32,7 +32,7 @@ void main() {
   test('loads initial preferences', () {
     final state = container.read(profileControllerProvider);
 
-    expect(state.displayName, 'Alex');
+    expect(state.displayName, 'Dexter');
     verify(() => source.load()).called(1);
   });
 
