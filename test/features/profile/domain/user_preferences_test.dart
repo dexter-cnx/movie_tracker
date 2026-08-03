@@ -5,7 +5,7 @@ void main() {
   test('uses safe defaults', () {
     const preferences = UserPreferences();
 
-    expect(preferences.displayName, 'Alex');
+    expect(preferences.displayName, 'Dexter');
     expect(preferences.languageCode, 'en');
     expect(preferences.notificationsEnabled, isTrue);
     expect(preferences.autoplayTrailers, isFalse);
@@ -37,7 +37,7 @@ void main() {
       'languageCode': 'jp',
     });
 
-    expect(restored.displayName, 'Alex');
+    expect(restored.displayName, 'Dexter');
     expect(restored.languageCode, 'en');
     expect(restored.notificationsEnabled, isTrue);
   });
