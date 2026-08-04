@@ -46,9 +46,7 @@ class AppImage extends StatelessWidget {
 
     final dpr = MediaQuery.devicePixelRatioOf(context);
     final cacheWidth = _toCacheDimension(width, dpr);
-    final cacheHeight = isCircle
-        ? cacheWidth
-        : _toCacheDimension(height, dpr);
+    final cacheHeight = isCircle ? cacheWidth : _toCacheDimension(height, dpr);
 
     Widget image = ExtendedImage.network(
       normalizedUrl,
@@ -65,9 +63,7 @@ class AppImage extends StatelessWidget {
       clearMemoryCacheIfFailed: true,
       retries: 2,
       timeRetry: const Duration(milliseconds: 400),
-      mode: enableZoom
-          ? ExtendedImageMode.gesture
-          : ExtendedImageMode.none,
+      mode: enableZoom ? ExtendedImageMode.gesture : ExtendedImageMode.none,
       initGestureConfigHandler: enableZoom
           ? (_) => GestureConfig(
                 minScale: 1,
@@ -114,9 +110,7 @@ class AppImage extends StatelessWidget {
   }
 
   int? _toCacheDimension(double? logicalSize, double dpr) {
-    if (logicalSize == null ||
-        !logicalSize.isFinite ||
-        logicalSize <= 0) {
+    if (logicalSize == null || !logicalSize.isFinite || logicalSize <= 0) {
       return null;
     }
 
