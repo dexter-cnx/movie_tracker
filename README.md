@@ -93,7 +93,6 @@ Branch นี้ต่อยอดจาก `feat/production-phase-1` และ�
 
 # Quick Review Path
 
-สำหรับ reviewer หรือผู้สัมภาษณ์:
 
 1. อ่าน README ส่วน Architecture และ Data Flow
 2. อ่าน [Code Walkthrough](docs/CODE_WALKTHROUGH.md)
