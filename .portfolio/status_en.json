@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "title": "Popcorn — Movie Tracker & Watchlist",
+    "tagline": "A production-oriented Flutter movie tracker using TMDB, Riverpod, caching, secure session storage, and automated quality gates.",
+    "status": "active",
+    "version": null
+  },
+  "summary": {
+    "short": "movie_tracker is a Flutter portfolio application for discovering TMDB movies, viewing details, managing watchlists and watched/favorite state, editing profiles, and demonstrating production engineering patterns.",
+    "long": "The project combines lightweight Clean Architecture with Riverpod, Dio, Hive caching, secure token storage, localization, responsive layouts, typed failures, retry and offline behavior, demo authentication, synchronized token refresh, structured logging, crash-reporting abstractions, automated tests, coverage gates, CI, and release preparation."
+  },
+  "highlights": [
+    "TMDB discovery, detail, search, and watchlist flows",
+    "Cache-first and stale-offline fallback policy",
+    "Secure demo session and synchronized token refresh",
+    "Unit, widget, golden, integration tests, coverage, and CI"
+  ],
+  "tech": ["Dart", "Flutter", "Riverpod", "Dio", "Hive", "TMDB", "go_router"],
+  "links": {
+    "repository": "https://github.com/dexter-cnx/movie_tracker",
+    "homepage": null,
+    "package": null,
+    "docs": null,
+    "demo": null
+  },
+  "updatedAt": "2026-08-27T00:00:00Z"
+}
