@@ -8,38 +8,37 @@ sealed class AppFailure implements Exception {
 }
 
 final class NetworkFailure extends AppFailure {
-  const NetworkFailure({Object? cause})
-      : super('Unable to connect to the movie service.', cause: cause);
+  const NetworkFailure({super.cause})
+      : super('Unable to connect to the movie service.');
 }
 
 final class TimeoutFailure extends AppFailure {
-  const TimeoutFailure({Object? cause})
-      : super('The request timed out. Please try again.', cause: cause);
+  const TimeoutFailure({super.cause})
+      : super('The request timed out. Please try again.');
 }
 
 final class UnauthorizedFailure extends AppFailure {
-  const UnauthorizedFailure({Object? cause})
-      : super('The API token is missing or invalid.', cause: cause);
+  const UnauthorizedFailure({super.cause})
+      : super('The API token is missing or invalid.');
 }
 
 final class RateLimitFailure extends AppFailure {
-  const RateLimitFailure({Object? cause})
-      : super('Too many requests. Please wait and try again.', cause: cause);
+  const RateLimitFailure({super.cause})
+      : super('Too many requests. Please wait and try again.');
 }
 
 final class ServerFailure extends AppFailure {
-  const ServerFailure({Object? cause})
-      : super('The movie service is temporarily unavailable.', cause: cause);
+  const ServerFailure({super.cause})
+      : super('The movie service is temporarily unavailable.');
 }
 
 final class ParsingFailure extends AppFailure {
-  const ParsingFailure({Object? cause})
-      : super('The movie response could not be read.', cause: cause);
+  const ParsingFailure({super.cause})
+      : super('The movie response could not be read.');
 }
 
 final class UnknownFailure extends AppFailure {
-  const UnknownFailure({Object? cause})
-      : super('Something went wrong.', cause: cause);
+  const UnknownFailure({super.cause}) : super('Something went wrong.');
 }
 
 AppFailure mapExceptionToFailure(Object error) {
