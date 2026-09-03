@@ -1,100 +1,127 @@
 import 'package:dio/dio.dart';
-import 'package:popcorn_movie_tracker/features/movies/data/models/movie_model.dart';
+import 'package:popcorn_movie_tracker/features/movies/data/models/tmdb_dto.dart';
+import 'package:popcorn_movie_tracker/features/movies/data/tmdb_api_client.dart';
 import 'package:popcorn_movie_tracker/features/movies/domain/entities/movie.dart';
 import 'package:popcorn_movie_tracker/features/movies/domain/entities/paged_movies.dart';
 import 'package:popcorn_movie_tracker/features/movies/domain/repositories/movie_repository.dart';
 
 class TmdbRemoteDataSource {
-  TmdbRemoteDataSource(this.dio);
-  final Dio dio;
+  TmdbRemoteDataSource(Dio dio) : api = TmdbApiClient(dio);
 
-  Map<String, dynamic> _params(String language) => {
-        'language': language,
-        'include_image_language': 'th,en,null',
-        'include_video_language': 'th,en',
-      };
+  TmdbRemoteDataSource.withClient(this.api);
 
-  Future<List<Movie>> _list(
-    String path,
-    String language, [
-    Map<String, dynamic>? extra,
-  ]) async {
-    final response = await dio.get<Map<String, dynamic>>(
-      path,
-      queryParameters: {..._params(language), ...?extra},
+  static const _imageLanguages = 'th,en,null';
+  static const _videoLanguages = 'th,en';
+  static const _detailAppend = 'credits,videos,similar';
+
+  final TmdbApiClient api;
+
+  Future<List<Movie>> popular(String language) async {
+    final page = await api.popular(
+      language,
+      _imageLanguages,
+      _videoLanguages,
+      1,
     );
-    final results = response.data?['results'] as List? ?? const [];
-    return results
-        .whereType<Map<String, dynamic>>()
-        .map(MovieModel.fromJson)
-        .toList();
+    return _movies(page.results);
   }
 
-  Future<List<Movie>> popular(String language) =>
-      _list('/movie/popular', language, {'page': 1});
-  Future<List<Movie>> trending(String language) =>
-      _list('/trending/movie/week', language);
-  Future<List<Movie>> topRated(String language) =>
-      _list('/movie/top_rated', language);
-  Future<List<Movie>> upcoming(String language) =>
-      _list('/movie/upcoming', language);
-  Future<List<Movie>> nowPlaying(String language) =>
-      _list('/movie/now_playing', language);
+  Future<List<Movie>> trending(String language) async {
+    final page = await api.trending(
+      language,
+      _imageLanguages,
+      _videoLanguages,
+    );
+    return _movies(page.results);
+  }
+
+  Future<List<Movie>> topRated(String language) async {
+    final page = await api.topRated(
+      language,
+      _imageLanguages,
+      _videoLanguages,
+    );
+    return _movies(page.results);
+  }
+
+  Future<List<Movie>> upcoming(String language) async {
+    final page = await api.upcoming(
+      language,
+      _imageLanguages,
+      _videoLanguages,
+    );
+    return _movies(page.results);
+  }
+
+  Future<List<Movie>> nowPlaying(String language) async {
+    final page = await api.nowPlaying(
+      language,
+      _imageLanguages,
+      _videoLanguages,
+    );
+    return _movies(page.results);
+  }
 
   Future<Movie> details(int id, String language) async {
-    final response = await dio.get<Map<String, dynamic>>(
-      '/movie/$id',
-      queryParameters: {
-        ..._params(language),
-        'append_to_response': 'credits,videos,similar',
-      },
+    final movie = await api.details(
+      id,
+      language,
+      _imageLanguages,
+      _videoLanguages,
+      _detailAppend,
     );
-    return MovieModel.fromJson(response.data ?? const {});
+    return movie.toDomain();
   }
 
-  Future<List<Movie>> search(String query, String language) =>
-      _list('/search/movie', language, {'query': query, 'page': 1});
+  Future<List<Movie>> search(String query, String language) async {
+    final page = await api.search(
+      query,
+      language,
+      _imageLanguages,
+      _videoLanguages,
+      1,
+    );
+    return _movies(page.results);
+  }
 
   Future<PagedMovies> searchPage(
     String query,
     String language,
     int page,
   ) async {
-    final response = await dio.get<Map<String, dynamic>>(
-      '/search/movie',
-      queryParameters: {
-        ..._params(language),
-        'query': query,
-        'page': page,
-      },
+    final response = await api.search(
+      query,
+      language,
+      _imageLanguages,
+      _videoLanguages,
+      page,
     );
-    final data = response.data ?? const <String, dynamic>{};
-    final results = data['results'] as List? ?? const [];
+
     return PagedMovies(
-      items: results
-          .whereType<Map<String, dynamic>>()
-          .map(MovieModel.fromJson)
-          .toList(growable: false),
-      page: (data['page'] as num?)?.toInt() ?? page,
-      totalPages: (data['total_pages'] as num?)?.toInt() ?? page,
+      items: _movies(response.results),
+      page: response.page,
+      totalPages: response.totalPages,
     );
   }
 
   Future<List<Genre>> genres(String language) async {
-    final response = await dio.get<Map<String, dynamic>>(
-      '/genre/movie/list',
-      queryParameters: _params(language),
-    );
-    final list = response.data?['genres'] as List? ?? const [];
-    return list
-        .whereType<Map<String, dynamic>>()
-        .map((e) => Genre((e['id'] as num).toInt(), e['name'] as String? ?? ''))
-        .toList();
+    final response = await api.genres(language);
+    return response.genres
+        .map((genre) => Genre(genre.id, genre.name))
+        .toList(growable: false);
   }
 
-  Future<List<Movie>> discover(int? genreId, String language) =>
-      _list('/discover/movie', language, {
-        if (genreId != null) 'with_genres': genreId,
-        'sort_by': 'popularity.desc',
-      });
+  Future<List<Movie>> discover(int? genreId, String language) async {
+    final page = await api.discover(
+      language,
+      _imageLanguages,
+      _videoLanguages,
+      genreId,
+      'popularity.desc',
+    );
+    return _movies(page.results);
+  }
+
+  List<Movie> _movies(Iterable<TmdbMovieDto> dtos) =>
+      dtos.map((dto) => dto.toDomain()).toList(growable: false);
 }
