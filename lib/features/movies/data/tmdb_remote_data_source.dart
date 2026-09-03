@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:popcorn_movie_tracker/features/movies/data/models/tmdb_dto.dart';
 import 'package:popcorn_movie_tracker/features/movies/data/tmdb_api_client.dart';
 import 'package:popcorn_movie_tracker/features/movies/domain/entities/movie.dart';
 import 'package:popcorn_movie_tracker/features/movies/domain/entities/paged_movies.dart';
@@ -121,7 +122,6 @@ class TmdbRemoteDataSource {
     return _movies(page.results);
   }
 
-  List<Movie> _movies(Iterable<dynamic> dtos) => dtos
-      .map((dto) => dto.toDomain() as Movie)
-      .toList(growable: false);
+  List<Movie> _movies(Iterable<TmdbMovieDto> dtos) =>
+      dtos.map((dto) => dto.toDomain()).toList(growable: false);
 }
