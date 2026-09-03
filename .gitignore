@@ -33,6 +33,10 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Generated source files (created by build_runner in make codegen / CI)
+**/*.g.dart
+**/*.freezed.dart
+
 # Symbolication related
 app.*.symbols
 
